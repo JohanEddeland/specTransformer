@@ -1,0 +1,177 @@
+function genericOperatorToSTL(obj, component, componentStrings, type, operatorList)
+%GENERICOPERATORTOSTL Summary of this function goes here
+%   obj is the testronSTL object.
+%   component is the handle to the current Simulink component.
+%   componentStrings is a cell array telling how to apply the operator, for
+%   example applying absolute value, componentStrings = {'abs(',')'}
+%   operatorList is an OPTIONAL list of operators to apply, for example
+%   '++-+' (must be of length equal to number of inputs)
+
+inputNames = obj.getInputNames(component);
+
+if exist('operatorList', 'var')
+    % Make sure length of operatorList is equal to number of inputs
+    assert(length(operatorList) == length(inputNames));
+else
+    operatorList = {};
+end
+
+if length(inputNames) == 1
+    genericOneInputToSTL(obj, component, inputNames, componentStrings, type);
+else
+    genericNInputsToSTL(obj, component, inputNames, componentStrings, type, operatorList);
+end
+
+end
+
+function genericOneInputToSTL(obj, component, inputNames, componentStrings, type)
+
+% We should have exactly two componentStrings to use
+assert(length(componentStrings) == 2);
+
+compString1 = componentStrings{1};
+compString2 = componentStrings{2};
+
+[str, startDelay, endDelay, depth, modalDepth, FPIstruct] = obj.getSubStructInfo(inputNames{1});
+str = obj.replaceFPIStrings(str);
+[startStrings, endStrings] = obj.getFPIStrings(str);
+
+for tmpIndex=1:length(startStrings)
+    startOfFirst = strfind(str,startStrings{tmpIndex});
+    endOfFirst = startOfFirst + length(startStrings{tmpIndex});
+    startOfNext = strfind(str,endStrings{tmpIndex});
+    FPIstruct(tmpIndex).formula = [compString1 FPIstruct(tmpIndex).formula compString2];
+    str = [str(1:endOfFirst-1) compString1 str(endOfFirst:startOfNext-1) compString2 str(startOfNext:end)];
+end
+
+% str is the formula
+% delay is the same as for input
+% depth is 1 more than input
+% modal depth is the same as for input
+updateStruct = struct();
+updateStruct.str = str;
+updateStruct.startDelay = startDelay;
+updateStruct.endDelay = endDelay;
+updateStruct.depth = depth + 1;
+updateStruct.modalDepth = modalDepth;
+updateStruct.FPIstruct = FPIstruct;
+updateStruct.type = type;
+updateStruct.component = component;
+
+obj.updateSubStructAndFormulaString(updateStruct);
+
+end
+
+function genericNInputsToSTL(obj, component, inputNames, componentStrings, type, operatorList)
+
+% componentStrings example: {'(', '==', ')'}
+% We should have exactly three componentStrings to use
+assert(length(componentStrings) == 3);
+
+compString1 = componentStrings{1};
+compString2 = componentStrings{2};
+compString3 = componentStrings{3};
+
+numOfPairs = length(inputNames)-1;
+
+[str1, ~, ~, ~, ~, FPIstruct1] = obj.getSubStructInfo(inputNames{1});
+[str2, ~, ~, ~, ~, FPIstruct2] = obj.getSubStructInfo(inputNames{2});
+
+
+for nPairs = 1:numOfPairs
+    FPIstruct = struct('prereqSignals', {},...
+        'prereqFormula', {}, ...
+        'formula', {});
+    [startStrings1, endStrings1] = obj.getFPIStrings(str1);
+    [startStrings2, endStrings2] = obj.getFPIStrings(str2);
+    
+    oldstr2 = str2;
+    for tmpIndex=1:length(startStrings1)
+        startOfFirst1 = strfind(str1,startStrings1{tmpIndex});
+        endOfFirst1 = startOfFirst1 + length(startStrings1{tmpIndex});
+        startOfNext1 = strfind(str1,endStrings1{tmpIndex});
+        endOfNext1 = startOfNext1 + length(endStrings1{tmpIndex});
+        term1 = str1(endOfFirst1:startOfNext1-1);
+        
+        str2 = oldstr2;
+        for tmpIndex2=1:length(startStrings2)
+            startOfFirst2 = strfind(str2,startStrings2{tmpIndex2});
+            endOfFirst2 = startOfFirst2 + length(startStrings2{tmpIndex2});
+            startOfNext2 = strfind(str2,endStrings2{tmpIndex2});
+            term2 = str2(endOfFirst2:startOfNext2-1);
+            
+            % Update prereqSignals
+            if isempty(FPIstruct1(tmpIndex).prereqSignals) && ...
+                    isempty(FPIstruct2(tmpIndex2).prereqSignals) && ...
+                    length(FPIstruct) > 1
+                % Empty prerequisites! We do not
+                % need to add another instance to
+                % FPIstruct
+                FPIstruct(end).prereqSignals = {FPIstruct1(tmpIndex).prereqSignals{:}, FPIstruct2(tmpIndex2).prereqSignals{:}};
+            else
+                FPIstruct(end+1).prereqSignals = {FPIstruct1(tmpIndex).prereqSignals{:}, FPIstruct2(tmpIndex2).prereqSignals{:}}; %#ok<AGROW>
+            end
+            
+            % Update prereqFormula
+            if isempty(FPIstruct1(tmpIndex).prereqFormula)
+                if isempty(FPIstruct2(tmpIndex2).prereqFormula)
+                    FPIstruct(end).prereqFormula = '';
+                else
+                    FPIstruct(end).prereqFormula = FPIstruct2(tmpIndex2).prereqFormula;
+                end
+            else
+                if isempty(FPIstruct2(tmpIndex2).prereqFormula)
+                    FPIstruct(end).prereqFormula = FPIstruct1(tmpIndex).prereqFormula;
+                else
+                    FPIstruct(end).prereqFormula = [FPIstruct1(tmpIndex).prereqFormula ' and ' FPIstruct2(tmpIndex2).prereqFormula];
+                end
+            end
+            
+            % If we have an operatorList to follow, update compString2 to
+            % use the current operator instead!
+            if ~isempty(operatorList)
+                compString2 = operatorList(nPairs + 1);
+            end
+            
+            str2 = [str2(1:endOfFirst2-1) compString1 term1 ' ' compString2 ' ' term2 compString3 str2(startOfNext2:end)];
+            FPIstruct(end).formula = [compString1 FPIstruct1(tmpIndex).formula ' ' compString2 ' ' FPIstruct2(tmpIndex2).formula compString3];
+        end
+        str2 = obj.replaceFPIStrings(str2);
+        str1 = [str1(1:startOfFirst1-1) str2 str1(endOfNext1:end)];
+    end
+    
+    try
+        [str2, ~, ~, ~, ~, FPIstruct2] = obj.getSubStructInfo(inputNames{nPairs + 2});
+        FPIstruct1 = FPIstruct;
+    catch
+    end
+    %FPIstruct1(1) = [];
+end
+%FPIstruct(1) = [];
+
+startDelayList = zeros(length(inputNames),1);
+endDelayList = zeros(length(inputNames), 1);
+depthList = zeros(length(inputNames),1);
+modalDepthList = zeros(length(inputNames),1);
+for nDelay = 1:length(inputNames)
+    [~, startDelay, endDelay, depth, modalDepth, ~] = obj.getSubStructInfo(inputNames{1});
+    startDelayList(nDelay) = startDelay;
+    endDelayList(nDelay) = endDelay;
+    depthList(nDelay) = depth + 1;
+    modalDepthList = modalDepth;
+end
+
+updateStruct = struct();
+updateStruct.str = str1;
+updateStruct.startDelay = max(startDelayList);
+updateStruct.endDelay = max(endDelayList);
+updateStruct.depth = max(depthList);
+updateStruct.modalDepth = max(modalDepthList);
+updateStruct.FPIstruct = FPIstruct;
+updateStruct.type = type;
+updateStruct.component = component;
+
+obj.updateSubStructAndFormulaString(updateStruct);
+
+end
+
