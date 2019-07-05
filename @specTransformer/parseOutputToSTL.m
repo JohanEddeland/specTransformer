@@ -86,10 +86,6 @@ while contFlag
             else
                 %We have to dive into the subsystem
                 obj.subSystemToSTL(component);
-                if strcmp(get(component, 'Path'), 'ChargingFunctionStatus_ver340912/RequirementsEvaluation/REQPROD340912_ChargingFunctionStatus/REQPROD340912_ChargingFunctionStatus') && ...
-                        strcmp(get(component, 'Name'), 'EvaluateRequirement')
-                    component = get_param('ChargingFunctionStatus_ver340912/RequirementsEvaluation/REQPROD340912_ChargingFunctionStatus/REQPROD340912_ChargingFunctionStatus/Switch', 'Handle');
-                end
             end
         elseif strcmp(blockType,'Sum')
             component = obj.sumToSTL(component); % generic operator
