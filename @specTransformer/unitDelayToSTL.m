@@ -4,12 +4,7 @@ function unitDelayToSTL(obj, component)
 %   component is a handle to the current block in the requirement model
 
 inputName = obj.getInputNames(component);
-[str, startDelay, endDelay, depth, modalDepth, FPIstruct, type] = obj.getSubStructInfo(inputName{1});
-
-str = obj.replaceFPIStrings(str);
-
-% Shift str backwards by 1 time step
-str = obj.shiftTimeBackwards(str, '1');
+[startDelay, endDelay, depth, modalDepth, FPIstruct, type] = obj.getSubStructInfo(inputName{1});
 
 % Fix the FPIstruct
 for k = 1:length(FPIstruct)
@@ -27,7 +22,6 @@ for k = 1:length(FPIstruct)
 end
 
 updateStruct = struct();
-updateStruct.str = str;
 updateStruct.startDelay = startDelay + 1;
 updateStruct.endDelay = endDelay;
 updateStruct.depth = depth;

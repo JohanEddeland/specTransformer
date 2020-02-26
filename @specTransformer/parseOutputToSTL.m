@@ -81,8 +81,23 @@ while contFlag
         elseif strcmp(blockType,'SubSystem')
             % Here, we can define STL formulas for template subsystems. 
             % Volvo templates have been removed. 
-            if strfind(get(component,'Name'),'Saturation')
+            % TODO: Make sure all the generated ones are correct!
+            if strfind(get(component,'Name'),'notAlways')
+                obj.notAlwaysToSTL(component);
+            elseif strfind(get(component,'Name'),'Saturation')
                 obj.saturationToSTL(component);
+            elseif strfind(get(component, 'Name'), 'evChanges')
+                obj.evChangesToSTL(component);
+            elseif strfind(get(component, 'Name'), 'resetCounter')
+                component = obj.resetCounterToSTL(component);
+            elseif strfind(get(component, 'Name'), 'SR_FF')
+                obj.srffToSTL(component);
+            elseif strfind(get(component,'Name'),'Detect') & ...
+                    strfind(get(component,'Name'), 'Decrease') %#ok<*AND2>
+                obj.detectDecreaseToSTL(component);
+            elseif strfind(get(component,'Name'),'Detect') & ...
+                    strfind(get(component,'Name'), 'Increase') %#ok<*STRIFCND>
+                obj.detectIncreaseToSTL(component);
             else
                 %We have to dive into the subsystem
                 obj.subSystemToSTL(component);
@@ -105,8 +120,11 @@ while contFlag
             component = obj.parentHandle(obj.systemHandle == component); % "component" here used to be "src"
             
             % Abort if formula is too long
-            if length(obj.subStruct(obj.subCounter - 1).string) > obj.charLimit ...
-                    || obj.tooLongSTLFormula == 1
+            %if length(obj.subStruct(obj.subCounter - 1).string) > obj.charLimit ...
+            %        || obj.tooLongSTLFormula == 1
+            % TODO: Implement!
+            totalFormulaLength = obj.getTotalFormulaLength();
+            if totalFormulaLength > obj.charLimit || obj.tooLongSTLFormula == 1
                 % If the last sub-formula created is longer than
                 % charLimit characters, abort!
                 disp(['**** The formula is now longer than the limit of ' num2str(obj.charLimit) ' characters! Aborting ...']);

@@ -8,10 +8,8 @@ FPIstruct = struct();
 FPIstruct.prereqSignals = {};
 FPIstruct.prereqFormula = '';
 FPIstruct.formula = [blockValue '[t]'];
-str = obj.getStringWithFPI([blockValue '[t]']);
 
 updateStruct = struct();
-updateStruct.str = str;
 updateStruct.startDelay = 0;
 updateStruct.endDelay = 0;
 updateStruct.depth = 0;

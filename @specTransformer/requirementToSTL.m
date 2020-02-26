@@ -7,7 +7,7 @@ reqVisited = {};
 disp(['*** Starting ' obj.requirement '.stl ***']);
 
 % Prepare the requirement subsystem for parsing
-outports = prepareSystemForParsing(obj);
+outports = prepareSystemForParsing(obj, obj.requirement);
 nOutports = length(outports);
 
 for outportCounter = 1:nOutports
@@ -28,26 +28,27 @@ for outportCounter = 1:nOutports
 
 end
 
-disp(['*** Finished ' obj.requirement '.stl (' num2str(length(obj.subStruct(end).string)) ' chars) ***']);
+formulaLength = obj.getTotalFormulaLength();
+disp(['*** Finished ' obj.requirement '.stl (' num2str(formulaLength) ' chars) ***']);
 
 % For the last outport of the requirement, log ALL signals
-logAllSignals(obj, component);
+%logAllSignals(obj, component);
 
 % Save the model to the slx-directory
-save_system([obj.resultsFolder '/' obj.model '.slx']);
+save_system([obj.model '.slx']);
 
-close_system([obj.resultsFolder '/' obj.model '.slx']);
+close_system([obj.model '.slx']);
 
 end
 
-function outports = prepareSystemForParsing(obj)
+function outports = prepareSystemForParsing(obj, requirement)
 %FINDREQUIREMENTSSUBSYSTEM Finds the subsystem for given requirement
 %   Detailed explanation goes here
 
 % Find Requirements SubSystem
 
-mdl = load_system([obj.resultsFolder '\' obj.model]);
-thisOutport = find_system(mdl, 'BlockType', 'Outport', 'Name', obj.requirement);
+mdl = load_system(obj.model);
+thisOutport = find_system(mdl, 'SearchDepth', 1, 'BlockType', 'Outport', 'Name', requirement);
 thisParent = get_param(thisOutport, 'Parent');
 
 % First, clear all the line names in the system
@@ -72,7 +73,7 @@ obj.logManyBlocks(allBlocks);
 
 % Only use outports that contain obj.requirement!
 % Find all the outports in the current requirement
-outports = find_system(thisParent,'SearchDepth',1,'LookUnderMasks','On','FollowLinks','On','BlockType','Outport');
+outports = find_system(thisParent,'SearchDepth',1,'LookUnderMasks','On','FollowLinks','On','BlockType','Outport', 'Name', requirement);
 
 end
 

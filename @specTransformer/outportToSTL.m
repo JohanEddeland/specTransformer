@@ -5,7 +5,7 @@ function outportToSTL(obj, component)
 % We have arrived at our final destination
 % Save the final formula in the corresponding STL file
 inputName = obj.getInputNames(component);
-[str, startDelay, endDelay, ~, ~, FPIstruct] = obj.getSubStructInfo(inputName{1});
+[startDelay, endDelay, ~, ~, FPIstruct] = obj.getSubStructInfo(inputName{1});
 
 if obj.subSystemLevel > 0
     % We're in a subSystem - do nothing!
@@ -28,7 +28,7 @@ else
     fprintf(obj.fileID,'# =========== SUBREQUIREMENTS ============\n');
     if length(FPIstruct) == 1
         fprintf(obj.fileID, '# No prerequisites!\n');
-        fprintf(obj.fileID, ['phi_sub1 := ' FPIstruct(1).formula '\n\n']);
+        fprintf(obj.fileID, ['# phi_sub1 := ' FPIstruct(1).formula '\n\n']);
     else
         for kk = 1:length(FPIstruct)
             fprintf(obj.fileID, ['# Prerequisite ' num2str(kk) ' #\n']);
@@ -46,16 +46,8 @@ else
             end
             fprintf(obj.fileID, ['# ' prereqSignals '\n']);
             
-            % Fix potential errors in the prerequisite, namely add "==1" where it's
-            % missing
-            FPIstruct(kk).prereqFormula = fixErrorsInSTLFormula(FPIstruct(kk).prereqFormula);
-            fprintf(obj.fileID, ['prereq' num2str(kk) ' := ' FPIstruct(kk).prereqFormula '\n']);
-            
-            % Fix potential errors in the formula, namely add "==1" where it's
-            % missing
-            FPIstruct(kk).formula = fixErrorsInSTLFormula(FPIstruct(kk).formula);
-            
-            fprintf(obj.fileID, ['phi_sub' num2str(kk) ' := ' FPIstruct(kk).formula '\n\n']);
+            fprintf(obj.fileID, ['# prereq' num2str(kk) ' := ' FPIstruct(kk).prereqFormula '\n']);
+            fprintf(obj.fileID, ['# phi_sub' num2str(kk) ' := ' FPIstruct(kk).formula '\n\n']);
         end
     end
     
@@ -66,24 +58,15 @@ else
     fprintf(obj.fileID, '# phi_implies is the formula when interpreting switches using "=>"\n');
     
     if length(FPIstruct) == 1
-        fprintf(obj.fileID, ['phi_implies := ' FPIstruct(1).formula '\n\n']);
+        fprintf(obj.fileID, ['# phi_implies := ' FPIstruct(1).formula '\n\n']);
     else
-        fprintf(obj.fileID, 'phi_implies := ');
+        fprintf(obj.fileID, '# phi_implies := ');
         for kk = 1:length(FPIstruct)-1
             fprintf(obj.fileID, ['(' FPIstruct(kk).prereqFormula ' => ' FPIstruct(kk).formula ') and ']);
         end
         % Write the final prereq and formula
         fprintf(obj.fileID, ['(' FPIstruct(end).prereqFormula ' => ' FPIstruct(end).formula ')\n\n']);
     end
-    
-    
-    % Remove all the FPI indicators
-    % Remove all the start strings ({1}, {2} etc)
-    str = regexprep(str,'{\d*}','');
-    str = regexprep(str,'{/\d*}','');
-    
-    % Fix errors in the formula
-    str = fixErrorsInSTLFormula(str);
     
     % Create "init"-time
     if startDelay == 0
@@ -99,17 +82,47 @@ else
         endTimeString = ['t_final - ' num2str(endDelay) '*dt'];
     end
     
-    % Print the final requirement
-    if strcmp(obj.specType, 'safety')
-        fprintf(obj.fileID,['phi := alw_[' initTimeString ',' endTimeString '](' str ')\n']);
-    elseif strcmp(obj.specType, 'none')
-        fprintf(obj.fileID,['phi := ' str '\n']);
+    if length(FPIstruct) == 1
+        if strcmp(obj.specType, 'safety')
+            fprintf(obj.fileID, [obj.requirement ' := alw_[' initTimeString ',' endTimeString '](' FPIstruct(1).formula ')\n\n']);
+        elseif strcmp(obj.specType, 'activation')
+            fprintf(obj.fileID, [obj.requirement ' := alw_[' initTimeString ',' endTimeString '](not(' FPIstruct(1).formula '))\n\n']);
+        elseif strcmp(obj.specType, 'none')
+            fprintf(obj.fileID, [obj.requirement ' := ' FPIstruct(1).formula '\n\n']);
+        else
+            error('Unknown requirement type (not safety or none)');
+        end
     else
-        error('Unknown requirement type (not safety or none)');
+        if strcmp(obj.specType, 'safety')
+            fprintf(obj.fileID, [obj.requirement ' := alw_[' initTimeString ',' endTimeString '](']);
+        elseif strcmp(obj.specType, 'activation')
+            fprintf(obj.fileID, [obj.requirement ' := alw_[' initTimeString ',' endTimeString '](not(']);
+        elseif strcmp(obj.specType, 'none')
+            fprintf(obj.fileID, [obj.requirement ' := ' FPIstruct(1).formula '\n\n']);
+        else
+            error('Unknown requirement type (not safety or none)');
+        end
+        
+        for kk = 1:length(FPIstruct)-1
+            fprintf(obj.fileID, ['(' FPIstruct(kk).prereqFormula ' and ' FPIstruct(kk).formula ') or ']);
+        end
+        
+        
+        % Write the final prereq and formula
+        if strcmp(obj.specType, 'safety')
+            fprintf(obj.fileID, ['(' FPIstruct(end).prereqFormula ' and ' FPIstruct(end).formula '))\n\n']);
+        elseif strcmp(obj.specType, 'activation')
+            fprintf(obj.fileID, ['(' FPIstruct(end).prereqFormula ' and ' FPIstruct(end).formula ')))\n\n']);
+        elseif strcmp(obj.specType, 'none')
+            fprintf(obj.fileID, ['(' FPIstruct(end).prereqFormula ' and ' FPIstruct(end).formula ')\n\n']);
+        else
+            error('Unknown requirement type (not safety or none)');
+        end
     end
     fclose(obj.fileID);
     
-    if length(str) > obj.charLimit
+    %if length(str) > obj.charLimit
+    if false
         % The STL formula is too long!
         if ~isdir([obj.resultsFolder '/TooLong'])
             mkdir([obj.resultsFolder '/TooLong']);
@@ -125,24 +138,5 @@ end
 
 end
 
-function newPhi = fixErrorsInSTLFormula(phi)
-% phi is a string, so newPhi is also a string
-STL_cont_flag = 1;
-
-while STL_cont_flag
-    try
-        formula = STL_Formula('phi', phi);
-        newPhi = disp(formula);
-        STL_cont_flag = 0;
-    catch
-        % We must replace 'var_to_replace' with 'var_to_replace==1'
-        var_to_replace = evalin('base','var_to_replace;');
-        disp(['Replacing ' var_to_replace ' with ' var_to_replace '==1']);
-        
-        phi = strrep(phi, var_to_replace, [var_to_replace '==1']);
-        
-    end
-end
-end
 
 

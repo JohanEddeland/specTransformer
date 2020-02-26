@@ -35,7 +35,6 @@ try
         updateStruct.type = 'phi_exp';
         
         FPIstruct.formula = blockName;
-        updateStruct.str = obj.getStringWithFPI('true');
         updateStruct.FPIstruct = FPIstruct;
         obj.updateSubStructAndFormulaString(updateStruct);
     elseif strcmp(blockName, 'false')
@@ -46,12 +45,10 @@ try
         updateStruct.type = 'phi_exp';
         
         FPIstruct.formula = blockName;
-        updateStruct.str = obj.getStringWithFPI('false');
         updateStruct.FPIstruct = FPIstruct;
         obj.updateSubStructAndFormulaString(updateStruct);
     else
         FPIstruct.formula = num2str(tmp);
-        updateStruct.str = obj.getStringWithFPI(num2str(tmp));
         updateStruct.FPIstruct = FPIstruct;
         obj.updateSubStructAndFormulaString(updateStruct);
     end
@@ -70,7 +67,6 @@ catch
     
     if regexp(blockName,'\d.\d')
         FPIstruct.formula = blockName;
-        updateStruct.str = obj.getStringWithFPI(blockName);
         updateStruct.FPIstruct = FPIstruct;
         obj.updateSubStructAndFormulaString(updateStruct);
     else
@@ -86,7 +82,6 @@ catch
             % We can just evaluate the value of the constant and use it
             % directly in the STL formula
             FPIstruct.formula = num2str(blockValue);
-            updateStruct.str = obj.getStringWithFPI(num2str(blockValue));
             updateStruct.FPIstruct = FPIstruct;
             obj.updateSubStructAndFormulaString(updateStruct)
         else
@@ -105,7 +100,6 @@ catch
             
             % The STL formula is simple, it's just "signalName[t]"
             FPIstruct.formula = [signalName '[t]'];
-            updateStruct.str = obj.getStringWithFPI([signalName '[t]']);
             updateStruct.FPIstruct = FPIstruct;
             updateStruct.setLogSignalName = 0;
             obj.updateSubStructAndFormulaString(updateStruct);

@@ -22,6 +22,7 @@ for iNames=1:length(inputNames)
                 if isempty(outSignalName)
                     inputNames{iNames} = ['{' num2str(obj.fpiCounter) '}' get(inputBlock,'Name') thisName(2:end-1) '[t]{/' num2str(obj.fpiCounter) '}'];
                 else
+                    error('TODO: Implement getInputNames using only FPIstruct instead of monolithic string for entire formula');
                     [outSignalName,~,~,~,~] = obj.getSubStructInfo(outSignalName);
                     startIndex = regexp(outSignalName,'\[t\]');
                     outSignalName = [outSignalName(1:startIndex-1) thisName(2:end-1) outSignalName(startIndex:end)];
@@ -50,12 +51,9 @@ for n_names = 1:length(inputNames)
         FPIstruct.prereqFormula = '';
         FPIstruct.formula = [inputNames{n_names} '[t]'];
         
-        str = obj.getStringWithFPI([inputNames{n_names} '[t]']);
-        
         inputNames{n_names} = ['sub' num2str(obj.subCounter)];
         
         updateStruct = struct();
-        updateStruct.str = str;
         updateStruct.startDelay = 0;
         updateStruct.endDelay = 0;
         updateStruct.depth = 0;
@@ -69,7 +67,6 @@ for n_names = 1:length(inputNames)
     elseif isempty(strfind(inputNames{n_names},'sub'))
         % The input does not contain 'sub'
         % The signal is something like "{5}SignalName[t]{/5}"
-        str = inputNames{n_names};
         tmpFormula = regexprep(inputNames{n_names},'{\d*}','');
         tmpFormula = regexprep(tmpFormula,'{/\d*}','');
         FPIstruct = struct();
@@ -80,7 +77,6 @@ for n_names = 1:length(inputNames)
         inputNames{n_names} = ['sub' num2str(obj.subCounter)];
         
         updateStruct = struct();
-        updateStruct.str = str;
         updateStruct.startDelay = 0;
         updateStruct.endDelay = 0;
         updateStruct.depth = 0;

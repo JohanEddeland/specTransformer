@@ -10,7 +10,7 @@ classdef specTransformer < handle
         paramString = '';
         fileID % This is set by initSTLFile
         fileName % This is set by initSTLFile
-        specType = 'safety'; % 'safety' or 'none'
+        specType = 'safety'; % 'safety', 'activation' or 'none'
         
         % Character limit for formula. parseOutputToSTL will terminate the 
         % loop if length of string is above this limit
@@ -37,6 +37,14 @@ classdef specTransformer < handle
         timesVisited = [];
         
         tooLongSTLFormula = 0; % This is set to 1 in outportToSTL if the formula is too long
+        
+        % The following variables are used to determine the data types of
+        % all logged blocks
+        allBlocks = []; % Vector of handles
+        allTypes = {}; % Cell array of data types (strings)
+        allDimensions = {}; % Cell array of dimensions (arrays)
+        logBlocks = {};
+        logTypes = {};
     end
     methods (Access = public)
         

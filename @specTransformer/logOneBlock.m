@@ -1,4 +1,4 @@
-function logOneBlock(obj, blockHandle)
+function lastOutputSignalName = logOneBlock(obj, blockHandle)
 blockName = get(blockHandle, 'Name');
 blockName = regexprep(blockName,'\s+',' '); % Remove whitespaces from the blockName
 blockName = blockName(~isspace(blockName));
@@ -39,6 +39,8 @@ if length(outportHandle) > 1
     obj.logCounter = obj.logCounter + 1;
     obj.fpiCounter = obj.fpiCounter + 1;
 end
+
+lastOutputSignalName = tmpSignalName;
 
 set(outportHandle,'Name',tmpSignalName);
 set_param(outportHandle(1),'DataLogging','on');

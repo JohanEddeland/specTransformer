@@ -5,17 +5,13 @@ function delayToSTL(obj, component)
 delayLength = get(component,'DelayLength');
 
 inputNames = obj.getInputNames(component);
-[str, startDelay, endDelay, depth, modalDepth, FPIstruct, type] = obj.getSubStructInfo(inputNames{1});
+[startDelay, endDelay, depth, modalDepth, FPIstruct, type] = obj.getSubStructInfo(inputNames{1});
 
 for k = 1:length(FPIstruct)
     FPIstruct(k).formula = obj.shiftTimeBackwards(FPIstruct(k).formula, delayLength);
 end
 
-str = obj.replaceFPIStrings(str);
-str = obj.shiftTimeBackwards(str,delayLength);
-
 updateStruct = struct();
-updateStruct.str = str;
 updateStruct.startDelay = startDelay;
 updateStruct.endDelay = endDelay + delayLength;
 updateStruct.depth = depth;

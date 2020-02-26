@@ -16,7 +16,6 @@ FPIstruct.prereqFormula = '';
 FPIstruct.formula = ['muxSignals' num2str(obj.muxCounter) '[t]'];
 
 updateStruct = struct();
-updateStruct.str = obj.getStringWithFPI(['muxSignals' num2str(obj.muxCounter) '[t]']);
 updateStruct.startDelay = 0;
 updateStruct.endDelay = 0;
 updateStruct.depth = 0;

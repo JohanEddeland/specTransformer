@@ -65,24 +65,14 @@ function andAsEqualityToSTL(obj, component, inputNames)
 
 numOfPairs = length(inputNames)-1;
 
-[str1, ~, ~, ~, ~, FPIstruct1] = obj.getSubStructInfo(inputNames{1});
-[str2, ~, ~, ~, ~, FPIstruct2] = obj.getSubStructInfo(inputNames{2});
+[~, ~, ~, ~, FPIstruct1] = obj.getSubStructInfo(inputNames{1});
+[~, ~, ~, ~, FPIstruct2] = obj.getSubStructInfo(inputNames{2});
 
 FPIstruct = struct();
 for nPairs = 1:numOfPairs
-    [startStrings1, endStrings1] = obj.getFPIStrings(str1);
-    [startStrings2, endStrings2] = obj.getFPIStrings(str2);
-    
-    oldstr2 = str2;
-    for tmpIndex=1:length(startStrings1)
-        startOfFirst1 = strfind(str1,startStrings1{tmpIndex});
-        endOfFirst1 = startOfFirst1 + length(startStrings1{tmpIndex});
-        startOfNext1 = strfind(str1,endStrings1{tmpIndex});
-        endOfNext1 = startOfNext1 + length(endStrings1{tmpIndex});
-        term1 = str1(endOfFirst1:startOfNext1-1);
-        
-        str2 = oldstr2;
-        for tmpIndex2=1:length(startStrings2)
+
+    for tmpIndex=1:length(FPIstruct1)
+        for tmpIndex2=1:length(FPIstruct2)
             startOfFirst2 = strfind(str2,startStrings2{tmpIndex2});
             endOfFirst2 = startOfFirst2 + length(startStrings2{tmpIndex2});
             startOfNext2 = strfind(str2,endStrings2{tmpIndex2});
@@ -115,15 +105,12 @@ for nPairs = 1:numOfPairs
                 end
             end
             
-            str2 = [str2(1:endOfFirst2-1) '((' term1 ' and ' term2 ') or (not(' term1 ') and not(' term2 ')))' str2(startOfNext2:end)];
             FPIstruct(end).formula = ['((' FPIstruct1(tmpIndex).formula ' and ' FPIstruct2(tmpIndex2).formula ') or (not(' FPIstruct1(tmpIndex).formula ') and not(' FPIstruct2(tmpIndex2).formula ')))'];
         end
-        str2 = obj.replaceFPIStrings(str2);
-        str1 = [str1(1:startOfFirst1-1) str2 str1(endOfNext1:end)];
     end
     
     try
-        [str2, ~, ~, ~, FPIstruct2] = obj.getSubStructInfo(inputNames{nPairs + 2});
+        [~, ~, ~, ~, FPIstruct2] = obj.getSubStructInfo(inputNames{nPairs + 2});
         FPIstruct1 = FPIstruct;
         FPIstruct1(1) = [];
     catch
@@ -136,7 +123,7 @@ endDelayList = zeros(length(inputNames), 1);
 depthList = zeros(length(inputNames),1);
 modalDepthList = zeros(length(inputNames),1);
 for nDelay = 1:length(inputNames)
-    [~, startDelay, endDelay, depth, modalDepth, ~] = obj.getSubStructInfo(inputNames{1});
+    [startDelay, endDelay, depth, modalDepth, ~] = obj.getSubStructInfo(inputNames{1});
     startDelayList(nDelay) = startDelay;
     endDelayList(nDelay) = endDelay;
     depthList(nDelay) = depth + 1;
@@ -144,7 +131,6 @@ for nDelay = 1:length(inputNames)
 end
 
 updateStruct = struct();
-updateStruct.str = str1;
 updateStruct.startDelay = max(startDelayList);
 updateStruct.endDelay = max(endDelayList);
 updateStruct.depth = max(depthList);
@@ -165,28 +151,14 @@ function notAndAsEqualityToSTL(obj, component, inputNames)
 
 numOfPairs = length(inputNames)-1;
 
-[str1, ~, ~, ~, ~, FPIstruct1] = obj.getSubStructInfo(inputNames{1});
-[str2, ~, ~, ~, ~, FPIstruct2] = obj.getSubStructInfo(inputNames{2});
+[~, ~, ~, ~, FPIstruct1] = obj.getSubStructInfo(inputNames{1});
+[~, ~, ~, ~, FPIstruct2] = obj.getSubStructInfo(inputNames{2});
 
 FPIstruct = struct();
 for nPairs = 1:numOfPairs
-    [startStrings1, endStrings1] = obj.getFPIStrings(str1);
-    [startStrings2, endStrings2] = obj.getFPIStrings(str2);
-    
-    oldstr2 = str2;
-    for tmpIndex=1:length(startStrings1)
-        startOfFirst1 = strfind(str1,startStrings1{tmpIndex});
-        endOfFirst1 = startOfFirst1 + length(startStrings1{tmpIndex});
-        startOfNext1 = strfind(str1,endStrings1{tmpIndex});
-        endOfNext1 = startOfNext1 + length(endStrings1{tmpIndex});
-        term1 = str1(endOfFirst1:startOfNext1-1);
-        
-        str2 = oldstr2;
-        for tmpIndex2=1:length(startStrings2)
-            startOfFirst2 = strfind(str2,startStrings2{tmpIndex2});
-            endOfFirst2 = startOfFirst2 + length(startStrings2{tmpIndex2});
-            startOfNext2 = strfind(str2,endStrings2{tmpIndex2});
-            term2 = str2(endOfFirst2:startOfNext2-1);
+
+    for tmpIndex=1:length(FPIstruct1)
+        for tmpIndex2=1:length(FPIstruct2)
             
             % Update prereqSignals
             if isempty(FPIstruct1(tmpIndex).prereqSignals) && ...
@@ -215,15 +187,12 @@ for nPairs = 1:numOfPairs
                 end
             end
             
-            str2 = [str2(1:endOfFirst2-1) '((' term1 ' and not(' term2 ')) or (not(' term1 ') and ' term2 '))' str2(startOfNext2:end)];
             FPIstruct(end).formula = ['((' FPIstruct1(tmpIndex).formula ' and not(' FPIstruct2(tmpIndex2).formula ')) or (not(' FPIstruct1(tmpIndex).formula ') and ' FPIstruct2(tmpIndex2).formula '))'];
         end
-        str2 = obj.replaceFPIStrings(str2);
-        str1 = [str1(1:startOfFirst1-1) str2 str1(endOfNext1:end)];
     end
     
     try
-        [str2, ~, ~, ~, ~, FPIstruct2] = obj.getSubStructInfo(inputNames{nPairs + 2});
+        [~, ~, ~, ~, ~, FPIstruct2] = obj.getSubStructInfo(inputNames{nPairs + 2});
         FPIstruct1 = FPIstruct;
         FPIstruct1(1) = [];
     catch
@@ -244,7 +213,6 @@ for nDelay = 1:length(inputNames)
 end
 
 updateStruct = struct();
-updateStruct.str = str1;
 updateStruct.startDelay = max(startDelayList);
 updateStruct.endDelay = max(endDelayList);
 updateStruct.depth = max(depthList);

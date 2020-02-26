@@ -1,0 +1,226 @@
+# Automatically generated STL formula
+# Model: AOTRT
+# Requirement: AOTRT
+# Author: Johan Lidén Eddeland
+
+# The following systems have been skipped and logged:
+
+# Parameters
+param t_init = 0, t_final = 10, dt = 0.001
+
+##########
+# Inport #
+##########
+# sub1 := {1}speed[t]{/1}
+# Depth: 		0
+# Modal depth: 	0
+# Start delay: 	0
+# End delay: 	0
+# Type: 		signal_exp
+
+############
+# Constant #
+############
+# sub2 := {2}0{/2}
+# Depth: 		0
+# Modal depth: 	0
+# Start delay: 	0
+# End delay: 	0
+# Type: 		signal_exp
+
+######################
+# RelationalOperator #
+######################
+# sub3 := {3}not(speed[t] == 0){/3}
+# Depth: 		1
+# Modal depth: 	0
+# Start delay: 	0
+# End delay: 	0
+# Type: 		phi_exp
+
+##########
+# Inport #
+##########
+# sub4 := {4}RPM[t]{/4}
+# Depth: 		0
+# Modal depth: 	0
+# Start delay: 	0
+# End delay: 	0
+# Type: 		signal_exp
+
+#######
+# Abs #
+#######
+# sub5 := {5}abs(RPM[t]){/5}
+# Depth: 		1
+# Modal depth: 	0
+# Start delay: 	0
+# End delay: 	0
+# Type: 		signal_exp
+
+############
+# Constant #
+############
+# sub6 := {6}0.1{/6}
+# Depth: 		0
+# Modal depth: 	0
+# Start delay: 	0
+# End delay: 	0
+# Type: 		signal_exp
+
+######################
+# RelationalOperator #
+######################
+# sub7 := {7}(abs(RPM[t]) <= 0.1){/7}
+# Depth: 		2
+# Modal depth: 	0
+# Start delay: 	0
+# End delay: 	0
+# Type: 		phi_exp
+
+############
+# Constant #
+############
+# sub8 := {8}0.001{/8}
+# Depth: 		0
+# Modal depth: 	0
+# Start delay: 	0
+# End delay: 	0
+# Type: 		signal_exp
+
+############
+# Constant #
+############
+# sub9 := {9}0.1{/9}
+# Depth: 		0
+# Modal depth: 	0
+# Start delay: 	0
+# End delay: 	0
+# Type: 		signal_exp
+
+##########
+# Inport #
+##########
+# sub10 := {10}gear[t]{/10}
+# Depth: 		0
+# Modal depth: 	0
+# Start delay: 	0
+# End delay: 	0
+# Type: 		signal_exp
+
+############
+# Constant #
+############
+# sub11 := {11}4{/11}
+# Depth: 		0
+# Modal depth: 	0
+# Start delay: 	0
+# End delay: 	0
+# Type: 		signal_exp
+
+######################
+# RelationalOperator #
+######################
+# sub12 := {12}(gear[t] == 4){/12}
+# Depth: 		1
+# Modal depth: 	0
+# Start delay: 	0
+# End delay: 	0
+# Type: 		phi_exp
+
+##########
+# Inport #
+##########
+# sub13 := {13}gearSelectionState[t]{/13}
+# Depth: 		0
+# Modal depth: 	0
+# Start delay: 	0
+# End delay: 	0
+# Type: 		signal_exp
+
+############
+# Constant #
+############
+# sub14 := {14}1{/14}
+# Depth: 		0
+# Modal depth: 	0
+# Start delay: 	0
+# End delay: 	0
+# Type: 		signal_exp
+
+######################
+# RelationalOperator #
+######################
+# sub15 := {15}(gearSelectionState[t] == 1){/15}
+# Depth: 		1
+# Modal depth: 	0
+# Start delay: 	0
+# End delay: 	0
+# Type: 		phi_exp
+
+#########
+# Logic #
+#########
+# sub16 := {16}((gear[t] == 4)  and  (gearSelectionState[t] == 1)){/16}
+# Depth: 		2
+# Modal depth: 	0
+# Start delay: 	0
+# End delay: 	0
+# Type: 		phi_exp
+
+#############
+# SubSystem #
+#############
+# sub17 := {17}(not(alw_[0, 100*dt](((gear[t-100*dt] == 4)  and  (gearSelectionState[t-100*dt] == 1))))){/17}
+# Depth: 		4
+# Modal depth: 	1
+# Start delay: 	100
+# End delay: 	0
+# Type: 		phi_exp
+
+#########
+# Logic #
+#########
+# sub18 := {19}((not(speed[t] == 0)  or  (abs(RPM[t]) <= 0.1))  or  (not(alw_[0, 100*dt](((gear[t-100*dt] == 4)  and  (gearSelectionState[t-100*dt] == 1)))))){/19}
+# Depth: 		2
+# Modal depth: 	0
+# Start delay: 	0
+# End delay: 	0
+# Type: 		phi_exp
+
+############
+# Constant #
+############
+# sub19 := {20}true{/20}
+# Depth: 		0
+# Modal depth: 	0
+# Start delay: 	0
+# End delay: 	0
+# Type: 		phi_exp
+
+##########
+# Switch #
+##########
+# sub20 := ((((gear[t] == 4)  and  (gearSelectionState[t] == 1)) and {22}((not(speed[t] == 0)  or  (abs(RPM[t]) <= 0.1))  or  (not(alw_[0, 100*dt](((gear[t-100*dt] == 4)  and  (gearSelectionState[t-100*dt] == 1)))))){/22}) or (not(((gear[t] == 4)  and  (gearSelectionState[t] == 1))) and {23}true{/23}))
+# Depth: 		4
+# Modal depth: 	0
+# Start delay: 	0
+# End delay: 	0
+# Type: 		phi_exp
+
+# =========== SUBREQUIREMENTS ============
+# Prerequisite 1 #
+# sub16 ~= 0
+prereq1 := ((gear[t] == 4)) and ((gearSelectionState[t] == 1))
+phi_sub1 := ((not ((speed[t] == 0))) or ((abs(RPM[t]) <= 0.1))) or (not (alw_[0, 100*dt] (((gear[t-100*dt] == 4)) and ((gearSelectionState[t-100*dt] == 1)))))
+
+# Prerequisite 2 #
+# sub16 == 0
+prereq2 := not (((gear[t] == 4)) and ((gearSelectionState[t] == 1)))
+phi_sub2 := inf>0
+
+# =========== FINAL REQUIREMENT ===========
+# phi_implies is the formula when interpreting switches using "=>"
+phi_implies := (((gear[t] == 4)) and ((gearSelectionState[t] == 1)) => ((not ((speed[t] == 0))) or ((abs(RPM[t]) <= 0.1))) or (not (alw_[0, 100*dt] (((gear[t-100*dt] == 4)) and ((gearSelectionState[t-100*dt] == 1)))))) and (not (((gear[t] == 4)) and ((gearSelectionState[t] == 1))) => inf>0)
+
+phi := alw_[t_init,t_final](((((gear[t] == 4)) and ((gearSelectionState[t] == 1))) and (((not ((speed[t] == 0))) or ((abs(RPM[t]) <= 0.1))) or (not (alw_[0, 100*dt] (((gear[t-100*dt] == 4)) and ((gearSelectionState[t-100*dt] == 1))))))) or (not (((gear[t] == 4)) and ((gearSelectionState[t] == 1)))))

@@ -20,9 +20,8 @@ inputNames = get(subSystem, 'InputSignalNames');
 inputValues = struct();
 for nNames = 1:length(inputNames)
     try
-        [str, startDelay, endDelay, depth, modalDepth, FPIstruct, type] = ...
+        [startDelay, endDelay, depth, modalDepth, FPIstruct, type] = ...
             obj.getSubStructInfo(inputNames{nNames});
-        inputValues(nNames).string = str;
         inputValues(nNames).startDelay = startDelay;
         inputValues(nNames).endDelay = endDelay;
         inputValues(nNames).depth = depth;
@@ -33,8 +32,6 @@ for nNames = 1:length(inputNames)
         % The input name is not a 'sub'-variable
         % It is probably a logged signal (e.g.
         % 'SR_FF43'
-        inputValues(nNames).string = ...
-            obj.getStringWithFPI([inputNames{nNames} '[t]']);
         obj.fpiCounter = obj.fpiCounter + 1;
         inputValues(nNames).startDelay = 0;
         inputValues(nNames).endDelay = 0;
@@ -77,12 +74,7 @@ for outportCounter = 1:length(outports)
     
     component = outports(outportCounter);
     
-    % Flag indicating if we are done or not
-    skipBlock = obj.checkIfBlockShouldBeSkipped(component);
-    
-    if ~skipBlock
-        obj.parseOutputToSTL(component);
-    end
+    obj.parseOutputToSTL(component);
     
     set(outportHandle(outportCounter),'Name',['sub' num2str(obj.subCounter - 1)]);
 end
@@ -96,7 +88,6 @@ function initializeInputValues(obj, inputHandles, inputValues)
 
 % Initialize values for the inputs
 for inpts = 1:length(inputValues)
-    inputString = inputValues(inpts).string;
     inputStartDelay = inputValues(inpts).startDelay;
     inputEndDelay = inputValues(inpts).endDelay;
     inputDepth = inputValues(inpts).depth;
@@ -107,7 +98,6 @@ for inpts = 1:length(inputValues)
     component = inputHandles(inpts);
     
     updateStruct = struct();
-    updateStruct.str = inputString;
     updateStruct.startDelay = inputStartDelay;
     updateStruct.endDelay = inputEndDelay;
     updateStruct.depth = inputDepth;

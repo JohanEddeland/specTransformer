@@ -32,16 +32,10 @@ assert(length(componentStrings) == 2);
 compString1 = componentStrings{1};
 compString2 = componentStrings{2};
 
-[str, startDelay, endDelay, depth, modalDepth, FPIstruct] = obj.getSubStructInfo(inputNames{1});
-str = obj.replaceFPIStrings(str);
-[startStrings, endStrings] = obj.getFPIStrings(str);
+[startDelay, endDelay, depth, modalDepth, FPIstruct] = obj.getSubStructInfo(inputNames{1});
 
-for tmpIndex=1:length(startStrings)
-    startOfFirst = strfind(str,startStrings{tmpIndex});
-    endOfFirst = startOfFirst + length(startStrings{tmpIndex});
-    startOfNext = strfind(str,endStrings{tmpIndex});
+for tmpIndex=1:length(FPIstruct)
     FPIstruct(tmpIndex).formula = [compString1 FPIstruct(tmpIndex).formula compString2];
-    str = [str(1:endOfFirst-1) compString1 str(endOfFirst:startOfNext-1) compString2 str(startOfNext:end)];
 end
 
 % str is the formula
@@ -49,7 +43,6 @@ end
 % depth is 1 more than input
 % modal depth is the same as for input
 updateStruct = struct();
-updateStruct.str = str;
 updateStruct.startDelay = startDelay;
 updateStruct.endDelay = endDelay;
 updateStruct.depth = depth + 1;
@@ -74,31 +67,18 @@ compString3 = componentStrings{3};
 
 numOfPairs = length(inputNames)-1;
 
-[str1, ~, ~, ~, ~, FPIstruct1] = obj.getSubStructInfo(inputNames{1});
-[str2, ~, ~, ~, ~, FPIstruct2] = obj.getSubStructInfo(inputNames{2});
+[~, ~, ~, ~, FPIstruct1, ~] = obj.getSubStructInfo(inputNames{1});
+[~, ~, ~, ~, FPIstruct2, ~] = obj.getSubStructInfo(inputNames{2});
 
 
 for nPairs = 1:numOfPairs
     FPIstruct = struct('prereqSignals', {},...
         'prereqFormula', {}, ...
         'formula', {});
-    [startStrings1, endStrings1] = obj.getFPIStrings(str1);
-    [startStrings2, endStrings2] = obj.getFPIStrings(str2);
     
-    oldstr2 = str2;
-    for tmpIndex=1:length(startStrings1)
-        startOfFirst1 = strfind(str1,startStrings1{tmpIndex});
-        endOfFirst1 = startOfFirst1 + length(startStrings1{tmpIndex});
-        startOfNext1 = strfind(str1,endStrings1{tmpIndex});
-        endOfNext1 = startOfNext1 + length(endStrings1{tmpIndex});
-        term1 = str1(endOfFirst1:startOfNext1-1);
+    for tmpIndex=1:length(FPIstruct1)
         
-        str2 = oldstr2;
-        for tmpIndex2=1:length(startStrings2)
-            startOfFirst2 = strfind(str2,startStrings2{tmpIndex2});
-            endOfFirst2 = startOfFirst2 + length(startStrings2{tmpIndex2});
-            startOfNext2 = strfind(str2,endStrings2{tmpIndex2});
-            term2 = str2(endOfFirst2:startOfNext2-1);
+        for tmpIndex2=1:length(FPIstruct2)
             
             % Update prereqSignals
             if isempty(FPIstruct1(tmpIndex).prereqSignals) && ...
@@ -133,15 +113,12 @@ for nPairs = 1:numOfPairs
                 compString2 = operatorList(nPairs + 1);
             end
             
-            str2 = [str2(1:endOfFirst2-1) compString1 term1 ' ' compString2 ' ' term2 compString3 str2(startOfNext2:end)];
             FPIstruct(end).formula = [compString1 FPIstruct1(tmpIndex).formula ' ' compString2 ' ' FPIstruct2(tmpIndex2).formula compString3];
         end
-        str2 = obj.replaceFPIStrings(str2);
-        str1 = [str1(1:startOfFirst1-1) str2 str1(endOfNext1:end)];
     end
     
     try
-        [str2, ~, ~, ~, ~, FPIstruct2] = obj.getSubStructInfo(inputNames{nPairs + 2});
+        [~, ~, ~, ~, FPIstruct2] = obj.getSubStructInfo(inputNames{nPairs + 2});
         FPIstruct1 = FPIstruct;
     catch
     end
@@ -154,7 +131,7 @@ endDelayList = zeros(length(inputNames), 1);
 depthList = zeros(length(inputNames),1);
 modalDepthList = zeros(length(inputNames),1);
 for nDelay = 1:length(inputNames)
-    [~, startDelay, endDelay, depth, modalDepth, ~] = obj.getSubStructInfo(inputNames{1});
+    [startDelay, endDelay, depth, modalDepth, ~] = obj.getSubStructInfo(inputNames{1});
     startDelayList(nDelay) = startDelay;
     endDelayList(nDelay) = endDelay;
     depthList(nDelay) = depth + 1;
@@ -162,7 +139,6 @@ for nDelay = 1:length(inputNames)
 end
 
 updateStruct = struct();
-updateStruct.str = str1;
 updateStruct.startDelay = max(startDelayList);
 updateStruct.endDelay = max(endDelayList);
 updateStruct.depth = max(depthList);

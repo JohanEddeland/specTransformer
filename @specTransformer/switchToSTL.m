@@ -4,28 +4,23 @@ function switchToSTL(obj, component)
 
 inputNames = obj.getInputNames(component);
 
-[str1, startDelay1, endDelay1, depth1, modalDepth1, FPIstruct1, type1] = obj.getSubStructInfo(inputNames{1});
-[str2, startDelay2, endDelay2, depth2, modalDepth2, FPIstruct2, type2] = obj.getSubStructInfo(inputNames{2});
-[str3, startDelay3, endDelay3, depth3, modalDepth3, FPIstruct3, type3] = obj.getSubStructInfo(inputNames{3});
+[startDelay1, endDelay1, depth1, modalDepth1, FPIstruct1, type1] = obj.getSubStructInfo(inputNames{1});
+[startDelay2, endDelay2, depth2, modalDepth2, FPIstruct2, type2] = obj.getSubStructInfo(inputNames{2});
+[startDelay3, endDelay3, depth3, modalDepth3, FPIstruct3, type3] = obj.getSubStructInfo(inputNames{3});
 
 % Inputs 1 and 3 should be of the same type (otherwise, how do we know how
 % to apply further operators to them?)
-assert(strcmp(type1, type3), 'The first and thirds input should be of the same type!');
-
-str2 = obj.replaceFPIStrings(str2);
-[startStrings, endStrings] = obj.getFPIStrings(str2);
+if ~strcmp(type1, type3)
+    % Types are not the same
+    % Enforce them to both be 'phi_exp', since we convert all signal_exp to
+    % phi_exp at the end (the signal_exp 's' will be 'not(s == 0)'
+    type1 = 'phi_exp';
+    type3 = 'phi_exp';
+end
 
 thisFPIstruct = struct();
 
-for tmpIndex=1:length(startStrings)
-    str1 = obj.replaceFPIStrings(str1);
-    str3 = obj.replaceFPIStrings(str3);
-    
-    startOfFirst = strfind(str2,startStrings{tmpIndex});
-    endOfFirst = startOfFirst + length(startStrings{tmpIndex});
-    startOfNext = strfind(str2,endStrings{tmpIndex});
-    endOfNext = startOfNext + length(endStrings{tmpIndex});
-    switchingCondition = str2(endOfFirst:startOfNext-1);
+for tmpIndex=1:length(FPIstruct2)
     
     % First, add data for when inp2 ~= 0
     for kInp1=1:length(FPIstruct1)
@@ -81,7 +76,6 @@ for tmpIndex=1:length(startStrings)
         thisFPIstruct(end).formula = FPIstruct3(kInp3).formula;
     end
     
-    str2 = [str2(1:startOfFirst-1) '((' switchingCondition ' and ' str1 ') or (not(' switchingCondition ') and ' str3 '))' str2(endOfNext:end)];
 end
 thisFPIstruct(1) = [];
 
@@ -91,7 +85,6 @@ thisDepth = max([depth1, depth2, depth3]) + 2;
 thisModalDepth = max([modalDepth1, modalDepth2, modalDepth3]);
 
 updateStruct = struct();
-updateStruct.str = str2;
 updateStruct.startDelay = thisStartDelay;
 updateStruct.endDelay = thisEndDelay;
 updateStruct.depth = thisDepth;

@@ -61,6 +61,7 @@ function sumWithMuxSignals(obj, component, componentStrings, oldInputNames)
 % file genericOperatorToSTL.m
 % The modification consists of replacing "muxSignals#" with the actual
 % values of each signal that has been muxed
+error('TODO: Implement sumToSTL/sumWithMuxSignals using only FPIstruct and not a monolithic string representing the STL formula');
 
 %inputNames = obj.getInputNames(component);
 if nargin == 3
@@ -290,26 +291,17 @@ assert(length(componentStrings) == 2);
 compString1 = componentStrings{1};
 compString2 = componentStrings{2};
 
-[str, startDelay, endDelay, depth, modalDepth, FPIstruct] = obj.getSubStructInfo(inputNames{1});
+[startDelay, endDelay, depth, modalDepth, FPIstruct] = obj.getSubStructInfo(inputNames{1});
 
-str = obj.replaceFPIStrings(str);
-[startStrings, endStrings] = obj.getFPIStrings(str);
 
-for tmpIndex=1:length(startStrings)
-    startOfFirst = strfind(str,startStrings{tmpIndex});
-    endOfFirst = startOfFirst + length(startStrings{tmpIndex});
-    startOfNext = strfind(str,endStrings{tmpIndex});
+for tmpIndex=1:length(FPIstruct)
     
     % Replace ' and ' with ' && ' and repalce ' or ' with ' || '
     % First replace in the FPI formula
     replacedFPI = strrep(FPIstruct(tmpIndex).formula, ' and ', ' && ');
     replacedFPI = strrep(replacedFPI, ' or ', ' || ');
-    % Then replace in the part of str that we surround with "sum()"
-    replacedStr = strrep(str(endOfFirst:startOfNext-1), ' and ', ' && ');
-    replacedStr = strrep(replacedStr, ' or ', ' || ');
     
     FPIstruct(tmpIndex).formula = [compString1 replacedFPI compString2];
-    str = [str(1:endOfFirst-1) compString1 replacedStr compString2 str(startOfNext:end)];
 end
 
 % str is the formula
@@ -317,7 +309,6 @@ end
 % depth is 1 more than input
 % modal depth is the same as for input
 updateStruct = struct();
-updateStruct.str = str;
 updateStruct.startDelay = startDelay;
 updateStruct.endDelay = endDelay;
 updateStruct.depth = depth + 1;

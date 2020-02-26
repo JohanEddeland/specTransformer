@@ -2,7 +2,6 @@
 function updateSubStructAndFormulaString(obj, inputStruct)
 %UPDATESUBSTRUCT Updates the subStruct variable in testronSTL object
 %   Appends information in the substruct variable, containing:
-%   - string
 %   - startDelay
 %   - endDelay (previously "delay")
 %   - depth
@@ -14,7 +13,6 @@ function updateSubStructAndFormulaString(obj, inputStruct)
 %   Also sets the name of the signal at outportCounter to the correct
 %   subName, and increases the subCounter variable.
 
-str = inputStruct.str;
 startDelay = inputStruct.startDelay;
 endDelay = inputStruct.endDelay;
 depth = inputStruct.depth;
@@ -37,18 +35,10 @@ for k = 1:length(FPIstruct)
     assert(nLeftPar == nRightPar);
 end
 
-% Check that str is reasonable
-% It should have an equal amount of left and right parenthese
-nLeftPar = length(strfind(str, '('));
-nRightPar = length(strfind(str, ')'));
-assert(nLeftPar == nRightPar);
+% Eliminate the entries in FPIstruct where the prereq is FALSE
+% e.g. if prereqSignals are {'sub1==0', 'sub1~=0'}
+FPIstruct = checkSatOfPrereqs(FPIstruct);
 
-% Check that there are no duplicate FPI strings
-[startStrings, endStrings] = obj.getFPIStrings(str);
-assert(length(startStrings) == length(unique(startStrings)));
-assert(length(endStrings) == length(unique(endStrings)));
-
-obj.subStruct(obj.subCounter).string = str;
 obj.subStruct(obj.subCounter).startDelay = startDelay;
 obj.subStruct(obj.subCounter).endDelay = endDelay;
 obj.subStruct(obj.subCounter).depth = depth;
@@ -67,11 +57,22 @@ blkType = get(component,'BlockType');
 poundString = repmat('#', 1, length(blkType) + 4);
 poundString = [poundString '\n'];
 
+% Create the string
+thisString = [];
+for kk = 1:length(FPIstruct)-1
+    thisString = [thisString '(' FPIstruct(kk).prereqFormula ' and ' FPIstruct(kk).formula ') or'];
+end
+if length(FPIstruct) == 1
+    thisString = [thisString FPIstruct(end).formula];
+else
+    thisString = [thisString '(' FPIstruct(end).prereqFormula ' and ' FPIstruct(end).formula ')'];
+end
+
 % Update the formulaString
 obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) poundString];
 obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) '# ' blkType ' #\n'];
 obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) poundString];
-obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) '# sub' num2str(obj.subCounter) ' := ' str '\n'];
+obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) '# sub' num2str(obj.subCounter) ' := ' thisString '\n'];
 obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) '# Depth: \t\t' num2str(depth) '\n'];
 obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) '# Modal depth: \t' num2str(modalDepth) '\n'];
 obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) '# Start delay: \t' num2str(startDelay) '\n'];
@@ -79,4 +80,57 @@ obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) '# En
 obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) '# Type: \t\t' type '\n\n'];
 
 obj.subCounter = obj.subCounter + 1;
+end
+
+function newFPIstruct = checkSatOfPrereqs(FPIstruct)
+
+newFPIstruct = [];
+
+for k = 1:numel(FPIstruct)
+    thisPrereqSignals = FPIstruct(k).prereqSignals;
+    sat = checkSatOfPrereq(thisPrereqSignals);
+    
+    if sat
+        % The current entry in FPIstruct is feasible
+        % We add it to the new FPIstruct
+        if isempty(newFPIstruct)
+            newFPIstruct = FPIstruct(k);
+        else
+            newFPIstruct(end+1) = FPIstruct(k); %#ok<*AGROW>
+        end
+    end
+end
+
+end
+
+function sat = checkSatOfPrereq(prereqSignals)
+
+sat = 1;
+for k = 1:numel(prereqSignals)
+    thisPrereqSignal = prereqSignals{k};
+    [startIdx, endIdx] = regexp(thisPrereqSignal, 'sub\d+');
+    
+    thisSubSignal = thisPrereqSignal(startIdx:endIdx);
+    
+    if ~exist(thisSubSignal, 'var')
+        % Assign variable value since it has not been assigned yet
+        if strfind(thisPrereqSignal, '~=') %#ok<*STRIFCND>
+            eval([thisSubSignal ' = 1;']);
+        elseif strfind(thisPrereqSignal, '==')
+            eval([strrep(thisPrereqSignal, '==', '=') ';']);
+        else
+            error('This should not be possible!');
+        end
+    end
+    
+    % Check if the variable corresponds to the sign
+    result = eval(thisPrereqSignal);
+    
+    if ~result
+        sat = 0;
+        return
+    end
+        
+end
+
 end
