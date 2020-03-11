@@ -56,7 +56,7 @@ updateStruct.endDelay = max(endDelayList);
 updateStruct.depth = max(depthList) + 2;
 updateStruct.modalDepth = max(modalDepthList);
 updateStruct.FPIstruct = thisFPIstruct;
-updateStruct.type = 'phi_exp';
+updateStruct.type = 'signal_exp';
 updateStruct.component = component;
 
 obj.updateSubStructAndFormulaString(updateStruct);
