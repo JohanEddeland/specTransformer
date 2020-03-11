@@ -4,7 +4,21 @@ function constantToSTL(obj, component)
 
 bugfix = get(component); %#ok<NASGU> % Bugfix
 blockName = get(component,'Value');
-blockValue = evalin('base',blockName);
+
+
+% If the block value is a variable in the base workspace, it is a parameter
+% that we want to load into the STL file
+isVar = evalin('base', ['exist(''' blockName ''', ''var'');']);
+if isVar
+    blockValue = evalin('base', blockName);
+    % If the parameter does not already exist in the parameter string, add
+    % it!
+    if ~contains(obj.paramString, [blockName ' ='])
+        obj.paramString = [obj.paramString blockName ' = ' num2str(blockValue) ', '];
+    end
+else
+    blockValue = eval(blockName);
+end
 
 if strfind(blockName,'.')
     if isempty(regexp(blockName,'\d\.\d', 'once'))
@@ -24,6 +38,17 @@ updateStruct.component = component;
 FPIstruct = struct();
 FPIstruct.prereqSignals = {};
 FPIstruct.prereqFormula = '';
+FPIstruct.prereqType = 'phi_exp';
+FPIstruct.formulaType = '';
+
+if isVar
+    updateStruct.type = 'signal_exp';
+    
+    FPIstruct.formula = blockName;
+    updateStruct.FPIstruct = FPIstruct;
+    obj.updateSubStructAndFormulaString(updateStruct);
+    return
+end
 
 try
     eval(['tmp = ' blockName ';']);
