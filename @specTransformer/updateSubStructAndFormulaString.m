@@ -39,13 +39,6 @@ end
 % e.g. if prereqSignals are {'sub1==0', 'sub1~=0'}
 FPIstruct = checkSatOfPrereqs(FPIstruct);
 
-obj.subStruct(obj.subCounter).startDelay = startDelay;
-obj.subStruct(obj.subCounter).endDelay = endDelay;
-obj.subStruct(obj.subCounter).depth = depth;
-obj.subStruct(obj.subCounter).modalDepth = modalDepth;
-obj.subStruct(obj.subCounter).FPIstruct = FPIstruct;
-obj.subStruct(obj.subCounter).type = type;
-
 if setLogSignalName
     ph = get_param(component,'PortHandles');
     outportHandle = ph.Outport;
@@ -72,12 +65,35 @@ end
 obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) poundString];
 obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) '# ' blkType ' #\n'];
 obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) poundString];
-obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) '# sub' num2str(obj.subCounter) ' := ' thisString '\n'];
+
+% Write the formula
+obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel)];
+if strcmp(type, 'signal_exp') || numel(FPIstruct)>1
+    obj.formulaString = [obj.formulaString '# '];
+end
+obj.formulaString = [obj.formulaString obj.requirement '_sub' num2str(obj.subCounter) ' := ' thisString '\n'];
+
 obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) '# Depth: \t\t' num2str(depth) '\n'];
 obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) '# Modal depth: \t' num2str(modalDepth) '\n'];
 obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) '# Start delay: \t' num2str(startDelay) '\n'];
 obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) '# End delay: \t' num2str(endDelay) '\n'];
 obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) '# Type: \t\t' type '\n\n'];
+
+% TODO: Generalize this!
+% If the formula is a phi_exp and it has no prerequisites, change the
+% formula name to be defined by a subformula instead. 
+if strcmp(type, 'phi_exp') && numel(FPIstruct)==1
+    for k = 1:numel(FPIstruct)
+        FPIstruct(k).formula = [obj.requirement '_sub' num2str(obj.subCounter)];
+    end
+end
+
+obj.subStruct(obj.subCounter).startDelay = startDelay;
+obj.subStruct(obj.subCounter).endDelay = endDelay;
+obj.subStruct(obj.subCounter).depth = depth;
+obj.subStruct(obj.subCounter).modalDepth = modalDepth;
+obj.subStruct(obj.subCounter).FPIstruct = FPIstruct;
+obj.subStruct(obj.subCounter).type = type;
 
 obj.subCounter = obj.subCounter + 1;
 end
