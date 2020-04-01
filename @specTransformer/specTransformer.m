@@ -45,6 +45,11 @@ classdef specTransformer < handle
         allDimensions = {}; % Cell array of dimensions (arrays)
         logBlocks = {};
         logTypes = {};
+        
+        % Flag indicating whether to log all signals after parsing a
+        % requirement
+        % This is done in requirementToSTL.m
+        logAllSubSignalsAfterParsing = 0;
     end
     methods (Access = public)
         

@@ -42,6 +42,13 @@ end
 
 lastOutputSignalName = tmpSignalName;
 
+if strcmp(get(outportHandle(1), 'DataLogging'), 'on') && numel(outportHandle)==1
+    % The block is already being logged
+    % Just return the current logged name, no need to log it again
+    lastOutputSignalName = get(outportHandle, 'Name');
+    return
+end
+
 set(outportHandle,'Name',tmpSignalName);
 set_param(outportHandle(1),'DataLogging','on');
 if length(outportHandle) > 1

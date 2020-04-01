@@ -31,8 +31,10 @@ end
 formulaLength = obj.getTotalFormulaLength();
 disp(['*** Finished ' obj.requirement '.stl (' num2str(formulaLength) ' chars) ***']);
 
-% For the last outport of the requirement, log ALL signals
-%logAllSignals(obj, component);
+% For the last outport of the requirement, log ALL signals if the flag is 1
+if obj.logAllSubSignalsAfterParsing
+    logAllSignals(obj, component);
+end
 
 % Save the model to the slx-directory
 save_system([obj.model '.slx']);
@@ -96,18 +98,28 @@ for i_lh=1:length(lh)
     sourceType = get(tmpParent, 'BlockType');
     % Criteria to log the signal:
     % - It has not been logged before
-    % - It does not contain "<" in signal
-    %   name
+    % - It does not contain "<" and ">" in the name
     % - It is not an inport (inports that
     %   need to be logged are already logged
     %   in testron_prepare_mdl_for_breach.m)
+    isBus = (~isempty(strfind(currentName, '<'))) && (~isempty(strfind(currentName, '>')));
     if ~isempty(currentName) && ...
             ~get(tmpHandle, 'DataLogging') && ...
-            isempty(strfind(currentName,'<')) && ...
+            ~isBus && ...
             ~strcmp(sourceType, 'Inport')
         % Log the block
         set(tmpHandle,'DataLogging',1)
         
+        % Store the block and type (to be used by parseSignalConstraints.m later)
+        parentName = [get(tmpParent, 'Path') '/' get(tmpParent, 'Name')];
+        IndexC = strfind(obj.allBlocks, parentName);
+        typeIndex = not(cellfun('isempty', IndexC));
+        obj.logBlocks = [obj.logBlocks; get(tmpHandle, 'Name')];
+        if numel(obj.allTypes) >= typeIndex
+            obj.logTypes = [obj.logTypes, obj.allTypes{typeIndex}];
+        else
+            obj.logTypes = [obj.logTypes, 'requirementToSTL.m: unknown'];
+        end
     end
 end
 end

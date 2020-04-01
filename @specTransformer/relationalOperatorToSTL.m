@@ -192,7 +192,7 @@ for nPairs = 1:numOfPairs
     end
     
     try
-        [~, ~, ~, ~, ~, FPIstruct2] = obj.getSubStructInfo(inputNames{nPairs + 2});
+        [~, ~, ~, ~, FPIstruct2] = obj.getSubStructInfo(inputNames{nPairs + 2});
         FPIstruct1 = FPIstruct;
         FPIstruct1(1) = [];
     catch
