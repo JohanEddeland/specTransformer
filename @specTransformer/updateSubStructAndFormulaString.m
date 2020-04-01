@@ -68,7 +68,7 @@ obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) pound
 
 % Write the formula
 obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel)];
-if strcmp(type, 'signal_exp') || numel(FPIstruct)>1
+if strcmp(type, 'signal_exp') || numel(FPIstruct)>1 || obj.createSubRequirements==0
     obj.formulaString = [obj.formulaString '# '];
 end
 obj.formulaString = [obj.formulaString obj.requirement '_sub' num2str(obj.subCounter) ' := ' thisString '\n'];
@@ -82,7 +82,7 @@ obj.formulaString = [obj.formulaString repmat('\t', 1, obj.subSystemLevel) '# Ty
 % TODO: Generalize this!
 % If the formula is a phi_exp and it has no prerequisites, change the
 % formula name to be defined by a subformula instead. 
-if strcmp(type, 'phi_exp') && numel(FPIstruct)==1
+if strcmp(type, 'phi_exp') && numel(FPIstruct)==1 && obj.createSubRequirements==1
     for k = 1:numel(FPIstruct)
         FPIstruct(k).formula = [obj.requirement '_sub' num2str(obj.subCounter)];
     end

@@ -50,6 +50,9 @@ classdef specTransformer < handle
         % requirement
         % This is done in requirementToSTL.m
         logAllSubSignalsAfterParsing = 0;
+        
+        % Flag indicating whether to create sub-requirements or not
+        createSubRequirements = 1;
     end
     methods (Access = public)
         
