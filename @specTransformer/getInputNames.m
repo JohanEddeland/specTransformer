@@ -61,6 +61,7 @@ for n_names = 1:length(inputNames)
         updateStruct.FPIstruct = FPIstruct;
         updateStruct.type = 'signal_exp';
         updateStruct.component = component;
+        updateStruct.setLogSignalName = 0; % Do not update output name
         
         obj.updateSubStructAndFormulaString(updateStruct)
         
@@ -84,6 +85,7 @@ for n_names = 1:length(inputNames)
         updateStruct.FPIstruct = FPIstruct;
         updateStruct.type = 'signal_exp';
         updateStruct.component = component;
+        updateStruct.setLogSignalName = 0; % Do not update output name
         
         obj.updateSubStructAndFormulaString(updateStruct)
     elseif ~isempty(strfind(inputNames{n_names},'<'))
