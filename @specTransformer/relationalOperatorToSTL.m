@@ -73,11 +73,6 @@ for nPairs = 1:numOfPairs
 
     for tmpIndex=1:length(FPIstruct1)
         for tmpIndex2=1:length(FPIstruct2)
-            startOfFirst2 = strfind(str2,startStrings2{tmpIndex2});
-            endOfFirst2 = startOfFirst2 + length(startStrings2{tmpIndex2});
-            startOfNext2 = strfind(str2,endStrings2{tmpIndex2});
-            term2 = str2(endOfFirst2:startOfNext2-1);
-            
             % Update prereqSignals
             if isempty(FPIstruct1(tmpIndex).prereqSignals) && ...
                     isempty(FPIstruct2(tmpIndex2).prereqSignals) && ...
