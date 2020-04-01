@@ -8,6 +8,7 @@
 
 % Get all the requirements to generate STL formulas for
 allSimulinkSpecifications = dir('examples/*.slx');
+addpath('examples');
 
 for specCounter = 1:numel(allSimulinkSpecifications)
     % Get the current specification name (remove .slx from the file name)
@@ -27,6 +28,7 @@ for specCounter = 1:numel(allSimulinkSpecifications)
     % 10.
     obj.startTime = 0;
     obj.endTime = 10;
+    obj.createSubRequirements = 0;
     
     % We also need to say what requirement TYPE it is
     % This can be either "safety" or "none"
