@@ -1,18 +1,12 @@
 % This script generates .stl files for the specifications in the folder
 % 'examples'
-
-% Get all the requirements to generate STL formulas for
-allSimulinkSpecifications = dir('examples/*.slx');
 addpath('examples');
-
-% Parameter for the specification
-ARCH_AT51_timeHorizon = 2.5;
 
 % Create the specTransformer object
 modelName = 'ARCH_AT51_example';
 reqName = 'ARCH_AT51_example';
 directoryToSaveIn = 'examples';
-fixedStepSize; % Step time needs to be included in case of delay blocks
+fixedStepSize = 0.04; % Step time needs to be included in case of delay blocks
 
 % Create the specTransformer object
 obj = specTransformer(modelName, reqName, directoryToSaveIn, fixedStepSize);
