@@ -18,10 +18,10 @@ assert(endTime > startTime, 'endTime must be larger than startTime. Are the inpu
 for tmpIndex=1:length(FPIstruct)
     inp1 = FPIstruct(tmpIndex).formula;
     % Future version (alw_[startTime, endTime](input))
-    FPIstruct(tmpIndex).formula = ['(alw[' num2str(startTime) ', ' num2str(endTime) '](' inp1 '))']; %#ok<*AGROW>
+    FPIstruct(tmpIndex).formula = ['(alw_[' num2str(startTime) ', ' num2str(endTime) '](' inp1 '))']; %#ok<*AGROW>
     
     % Past version (hist_[obj.endTime - endTime, obj.endTime - startTime](input)
-    % FPIstruct(tmpIndex).formula = ['(hist[' num2str(obj.endTime - endTime) ', ' num2str(obj.endTime - startTime) '](' inp1 '))']; %#ok<*AGROW>
+    % FPIstruct(tmpIndex).formula = ['(hist_[' num2str(obj.endTime - endTime) ', ' num2str(obj.endTime - startTime) '](' inp1 '))']; %#ok<*AGROW>
 end
 
 updateStruct = struct();
