@@ -98,6 +98,8 @@ while contFlag
             elseif strfind(get(component,'Name'),'Detect') & ...
                     strfind(get(component,'Name'), 'Increase') %#ok<*STRIFCND>
                 obj.detectIncreaseToSTL(component);
+            elseif strfind(get(component, 'Name'), 'alwaysWithinTime')
+                obj.alwaysWithinTimeToSTL(component);
             else
                 %We have to dive into the subsystem
                 obj.subSystemToSTL(component);
