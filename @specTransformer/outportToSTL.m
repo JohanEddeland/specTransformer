@@ -84,11 +84,11 @@ else
     
     if length(FPIstruct) == 1
         if strcmp(obj.specType, 'safety')
-            fprintf(obj.fileID, [obj.requirement ' := alw_[' initTimeString ',' endTimeString '](' FPIstruct(1).formula ')\n\n']);
+            fprintf(obj.fileID, ['phi_' obj.requirement ' := alw_[' initTimeString ',' endTimeString '](' FPIstruct(1).formula ')\n\n']);
         elseif strcmp(obj.specType, 'activation')
-            fprintf(obj.fileID, [obj.requirement ' := alw_[' initTimeString ',' endTimeString '](not(' FPIstruct(1).formula '))\n\n']);
+            fprintf(obj.fileID, ['phi_' obj.requirement ' := alw_[' initTimeString ',' endTimeString '](not(' FPIstruct(1).formula '))\n\n']);
         elseif strcmp(obj.specType, 'none')
-            fprintf(obj.fileID, [obj.requirement ' := ' FPIstruct(1).formula '\n\n']);
+            fprintf(obj.fileID, ['phi_' obj.requirement ' := ' FPIstruct(1).formula '\n\n']);
         else
             error('Unknown requirement type (not safety or none)');
         end
