@@ -94,11 +94,11 @@ else
         end
     else
         if strcmp(obj.specType, 'safety')
-            fprintf(obj.fileID, [obj.requirement ' := alw_[' initTimeString ',' endTimeString '](']);
+            fprintf(obj.fileID, ['phi_' obj.requirement ' := alw_[' initTimeString ',' endTimeString '](']);
         elseif strcmp(obj.specType, 'activation')
-            fprintf(obj.fileID, [obj.requirement ' := alw_[' initTimeString ',' endTimeString '](not(']);
+            fprintf(obj.fileID, ['phi_' obj.requirement ' := alw_[' initTimeString ',' endTimeString '](not(']);
         elseif strcmp(obj.specType, 'none')
-            fprintf(obj.fileID, [obj.requirement ' := ' FPIstruct(1).formula '\n\n']);
+            fprintf(obj.fileID, ['phi_' obj.requirement ' := ' FPIstruct(1).formula '\n\n']);
         else
             error('Unknown requirement type (not safety or none)');
         end
