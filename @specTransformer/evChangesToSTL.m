@@ -19,12 +19,9 @@ assert(duration > steptime, 'duration must be larger than tstep. Are the inputs 
 % Calculate the time tolerance
 timeToHold = duration/steptime;
 
-% In case the time tolerance is not an integer, it should be rounded up to
-% be equivalent to semantics of toleranceCounter block
-% NOTE: To handle the floating point error discussed above, we take ceil()
-% of the value PLUS 2*eps. This will ensure an extra point in time taken
-% into account. 
-timeToHold = ceil(timeToHold);
+% In case the time tolerance is not an integer, it should be rounded down to
+% be equivalent to semantics of evChanges block.
+timeToHold = floor(timeToHold);
 
 for tmpIndex=1:length(FPIstruct)
     inp3 = FPIstruct(tmpIndex).formula;
