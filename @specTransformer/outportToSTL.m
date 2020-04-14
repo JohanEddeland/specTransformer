@@ -70,16 +70,16 @@ else
     
     % Create "init"-time
     if startDelay == 0
-        initTimeString = 't_init';
+        initTimeString = ['t_init_' obj.model];
     else
-        initTimeString = ['t_init + ' num2str(startDelay) '*dt'];
+        initTimeString = ['t_init_' obj.model ' + ' num2str(startDelay) '*dt'];
     end
     
     % Create end-time
     if endDelay == 0
-        endTimeString = 't_final';
+        endTimeString = ['t_final_' obj.model];
     else
-        endTimeString = ['t_final - ' num2str(endDelay) '*dt'];
+        endTimeString = ['t_final_' obj.model ' - ' num2str(endDelay) '*dt'];
     end
     
     if length(FPIstruct) == 1
