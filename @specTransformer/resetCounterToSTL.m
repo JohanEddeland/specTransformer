@@ -2,24 +2,12 @@ function thisRelBlock = resetCounterToSTL(obj, component)
 %FUNCTION   Description goes here.
 %
 
-% IMPORTANT!
-% This function is SIMPLIFIED and only uses ONE value for Inc (the maximum
-% of all possible Inc values)!!!
-
 inputNames = obj.getInputNames(component);
 
 [rStartDelay, rEndDelay, rDepth, rModalDepth, FPIstruct] = obj.getSubStructInfo(inputNames{1}); % r
-% [rvVal, ~, ~, ~, ~] = obj.getSubStructInfo(inputNames{2}); % rv
+[~, ~, ~, ~, FPIstruct2] = obj.getSubStructInfo(inputNames{2}); % rv
 [~, ~, ~, ~, FPIstruct3] = obj.getSubStructInfo(inputNames{3}); % Inc
-% [maxVal, ~, ~, ~, ~] = obj.getSubStructInfo(inputNames{4}); % Max
-
-% SIMPLIFIED: Find the maximum Inc parameter
-% available
-inc = 0;
-for tmpIndex=1:length(FPIstruct3)
-    tmpInc = evalin('base',FPIstruct3(tmpIndex).formula);
-    inc = max(inc, tmpInc);
-end
+[~, ~, ~, ~, FPIstruct4] = obj.getSubStructInfo(inputNames{4}); % Max
 
 % IMPORTANT!!
 % We can't set the output of THIS block to an STL
@@ -42,7 +30,6 @@ end
 % the CounterResetMax
 
 
-
 % There can be several "components"
 % connected to this one outport
 %component = componentCell(kComponent);
@@ -59,8 +46,6 @@ for relBlockCounter = 1:length(relBlocks)
     end
 end
 
-
-
 % Assert that the "new" component is actually a relational
 % operator!
 if ~strcmp(get(thisRelBlock, 'BlockType'), 'RelationalOperator')
@@ -69,7 +54,7 @@ if ~strcmp(get(thisRelBlock, 'BlockType'), 'RelationalOperator')
     
     % Set the returned thisRelBlock to be the parent, since we have now
     % logged this block and shouldn't try to create an STL formula for it
-    % again. 
+    % again.
     thisRelBlock = obj.parentHandle(obj.systemHandle == component);
     return
 end
@@ -88,100 +73,184 @@ if isempty(inpNamesTmp{2})
 else
     % Option 2: Input 2 to the relational operator has
     % already been set. We find the value!
-    [~,~,~,~,FPIstruct2] = obj.getSubStructInfo(inpNamesTmp{2});
-    maxVal = evalin('base',FPIstruct2(1).formula);
+    [~,~,~,~,FPIstruct3] = obj.getSubStructInfo(inpNamesTmp{2});
+    maxVal = evalin('base',FPIstruct3(1).formula);
 end
 
-% Calculate the time tolerance (max/inc)
-timeTol = maxVal/inc;
+% The current implementation assumes that the resetValue is 0
+% Assert this!
+assert(length(FPIstruct2) == 1, ...
+    'We assume that the resetValue is the constant 0 (cannot have several entries in FPIstruct');
+resetValue = evalin('base', FPIstruct2(1).formula);
+assert(resetValue == 0, ...
+    'We assume that the resetValue is 0');
+
+% The 4th input has to be higher than maxVal (otherwise we will never reach
+% what we need to get a true output). Assert this!
+assert(length(FPIstruct4) == 1, ...
+    'We assume that the 4th input is a constant');
+fourthInput = evalin('base', FPIstruct4(1).formula);
+assert(fourthInput > maxVal, ...
+    'The 4th input has to be larger than maxVal in order to be able to both falsify and satisfy the temporal operator');
+
+newFPIstruct = struct('prereqSignals', {},...
+    'prereqFormula', {}, ...
+    'formula', {});
 
 for tmpIndex=1:length(FPIstruct)
     
-    switch get(thisRelBlock, 'Operator')
-        case '<'
-            % Old implementation using future operators
-            % ev_[0, (timeTol-1)*dt](r[t - (timeTol-1)*dt]) or (t < maxVal)
-            % rShifted = obj.shiftTimeBackwards(rVal(endOfFirst:startOfNext-1), num2str(timeTol-1));
-            % FPIstruct(tmpIndex).formula = ['ev_[0,' num2str(timeTol-1) '*dt](' rShifted ') or (t < ' num2str(maxVal) ')'];
-            % rVal = [rVal(1:endOfFirst-1) '(ev_[0,' num2str(timeTol-1) '*dt](' rShifted ') or (t < ' num2str(maxVal) '))' rVal(startOfNext:end)];
-
-            % New implementation with past operators
-            FPIstruct(tmpIndex).formula = ['once_[0,' num2str(timeTol-1) '*dt](' FPIstruct(tmpIndex).formula ')'];
-            
-            startDelay = rStartDelay + timeTol - 1;
-            depth = rDepth + 2;
-            modalDepth = rModalDepth + 1;
-        case '<='
-            % Old implementation using future operators
-            % ev_[0, timeTol*dt](r[t - timeTol*dt]) or (t <= maxVal)
-            % rShifted = obj.shiftTimeBackwards(rVal(endOfFirst:startOfNext-1), num2str(timeTol));
-            % FPIstruct(tmpIndex).formula = ['ev_[0,' num2str(timeTol-1) '*dt](' rShifted ') or (t <= ' num2str(maxVal) ')'];
-            % rVal = [rVal(1:endOfFirst-1) '(ev_[0,' num2str(timeTol-1) '*dt](' rShifted ') or (t <= ' num2str(maxVal) '))' rVal(startOfNext:end)];
-            
-            % New implementation with past operators
-            FPIstruct(tmpIndex).formula = ['once_[0,' num2str(timeTol) '*dt](' FPIstruct(tmpIndex).formula ')'];
-            
-            startDelay = rStartDelay + timeTol;
-            depth = rDepth + 2;
-            modalDepth = rModalDepth + 1;
-        case '>'
-            % Old implementation using future operators
-            % alw_[0, (timeTol-1)*dt](not(r[t - (timeTol-1)*dt])) and (t > maxVal)
-            % rShifted = obj.shiftTimeBackwards(rVal(endOfFirst:startOfNext-1), num2str(timeTol-1));
-            % FPIstruct(tmpIndex).formula = ['alw_[0,' num2str(timeTol-1) '*dt](not(' rShifted ')) and (t > ' num2str(maxVal) ')'];
-            % rVal = [rVal(1:endOfFirst-1) '(alw_[0,' num2str(timeTol-1) '*dt](not(' rShifted ')) and (t > ' num2str(maxVal) '))' rVal(startOfNext:end)];
-            
-            % New implementation with past operators
-            FPIstruct(tmpIndex).formula = ['hist_[0,' num2str(timeTol-1) '*dt](not(' FPIstruct(tmpIndex).formula '))'];
-            
-            startDelay = rStartDelay + timeTol - 1;
-            depth = rDepth + 3;
-            modalDepth = rModalDepth + 1;
-        case '>='
-            % Old implementation using future operators
-            % alw_[0, timeTol*dt](not(r[t - timeTol*dt])) and (t >= maxVal)
-            % rShifted = obj.shiftTimeBackwards(rVal(endOfFirst:startOfNext-1), num2str(timeTol));
-            % FPIstruct(tmpIndex).formula = ['alw_[0,' num2str(timeTol) '*dt](not(' rShifted ')) and (t >= ' num2str(maxVal) ')'];
-            % rVal = [rVal(1:endOfFirst-1) '(alw_[0,' num2str(timeTol) '*dt](not(' rShifted ')) and (t >= ' num2str(maxVal) '))' rVal(startOfNext:end)];
-            
-            % New implementation with past operators
-            FPIstruct(tmpIndex).formula = ['hist_[0,' num2str(timeTol) '*dt](not(' FPIstruct(tmpIndex).formula '))'];
-            
-            startDelay = rStartDelay + timeTol;
-            depth = rDepth + 3;
-            modalDepth = rModalDepth + 1;
-        case '~='
-            % TODO: Confirm that this is correct!
-            % Same as for '<'
-            
-            % Old implementation using future operators
-            % rShifted = obj.shiftTimeBackwards(rVal(endOfFirst:startOfNext-1), num2str(timeTol-1));
-            % FPIstruct(tmpIndex).formula = ['ev_[0,' num2str(timeTol-1) '*dt](' rShifted ')'];
-            % rVal = [rVal(1:endOfFirst-1) '(ev_[0,' num2str(timeTol-1) '*dt](' rShifted '))' rVal(startOfNext:end)];
-            
-            % New implementation with past operators
-            FPIstruct(tmpIndex).formula = ['once_[0,' num2str(timeTol-1) '*dt](' FPIstruct(tmpIndex).formula ')'];
-            
-            startDelay = rStartDelay + timeTol - 1;
-            depth = rDepth + 1;
-            modalDepth = rModalDepth + 1;
-        case '=='
-            % TODO: Confirm that this is correct!
-            % Same as for '>='
-            
-            % Old implementation using future operators
-            % rShifted = obj.shiftTimeBackwards(rVal(endOfFirst:startOfNext-1), num2str(timeTol));
-            % FPIstruct(tmpIndex).formula = ['alw_[0,' num2str(timeTol) '*dt](not(' rShifted ')) and (t >= ' num2str(maxVal) ')'];
-            % rVal = [rVal(1:endOfFirst-1) '(alw_[0,' num2str(timeTol) '*dt](not(' rShifted ')) and (t >= ' num2str(maxVal) '))' rVal(startOfNext:end)];
-            
-            % New implementation with past operators
-            FPIstruct(tmpIndex).formula = ['hist_[0,' num2str(timeTol) '*dt](not(' FPIstruct(tmpIndex).formula '))'];
-            
-            startDelay = rStartDelay + timeTol;
-            depth = rDepth + 3;
-            modalDepth = rModalDepth + 1;
-        otherwise
-            error('Unknown operator in the parent to resetCounter')
+    for tmpIndex3 = 1:length(FPIstruct3)
+        
+        % Update prereqSignals
+        if isempty(FPIstruct(tmpIndex).prereqSignals) && ...
+                isempty(FPIstruct3(tmpIndex3).prereqSignals) && ...
+                length(newFPIstruct) > 1
+            % Empty prerequisites! We do not
+            % need to add another instance to
+            % FPIstruct
+            newFPIstruct(end).prereqSignals = {FPIstruct(tmpIndex).prereqSignals{:}, FPIstruct3(tmpIndex3).prereqSignals{:}}; %#ok<*CCAT>
+        else
+            newFPIstruct(end+1).prereqSignals = {FPIstruct(tmpIndex).prereqSignals{:}, FPIstruct3(tmpIndex3).prereqSignals{:}}; %#ok<AGROW>
+        end
+        
+        % Update prereqFormula
+        if isempty(FPIstruct(tmpIndex).prereqFormula)
+            if isempty(FPIstruct3(tmpIndex3).prereqFormula)
+                newFPIstruct(end).prereqFormula = '';
+            else
+                newFPIstruct(end).prereqFormula = FPIstruct3(tmpIndex3).prereqFormula;
+            end
+        else
+            if isempty(FPIstruct3(tmpIndex3).prereqFormula)
+                newFPIstruct(end).prereqFormula = FPIstruct(tmpIndex).prereqFormula;
+            else
+                newFPIstruct(end).prereqFormula = [FPIstruct(tmpIndex).prereqFormula ' and ' FPIstruct3(tmpIndex3).prereqFormula];
+            end
+        end
+        
+        % Calculate the "inc" value for the given FPIstruct entry
+        inc = evalin('base',FPIstruct3(tmpIndex3).formula);
+        
+        % Calculate the time tolerance (max/inc)
+        timeTol = maxVal/inc;
+        
+        switch get(thisRelBlock, 'Operator')
+            case '<'
+                % Old implementation using future operators
+                % ev_[0, (timeTol-1)*dt](r[t - (timeTol-1)*dt]) or (t < maxVal)
+                % rShifted = obj.shiftTimeBackwards(rVal(endOfFirst:startOfNext-1), num2str(timeTol-1));
+                % FPIstruct(tmpIndex).formula = ['ev_[0,' num2str(timeTol-1) '*dt](' rShifted ') or (t < ' num2str(maxVal) ')'];
+                % rVal = [rVal(1:endOfFirst-1) '(ev_[0,' num2str(timeTol-1) '*dt](' rShifted ') or (t < ' num2str(maxVal) '))' rVal(startOfNext:end)];
+                
+                % New implementation with past operators
+                if isinf(timeTol)
+                    % The formula cannot be falsified
+                    newFPIstruct(end).formula = 'true';
+                else
+                    newFPIstruct(end).formula = ['once_[0,' num2str(timeTol-1) '*dt](' FPIstruct(tmpIndex).formula ')'];
+                end
+                
+                startDelay = rStartDelay + timeTol - 1;
+                depth = rDepth + 2;
+                modalDepth = rModalDepth + 1;
+            case '<='
+                % Old implementation using future operators
+                % ev_[0, timeTol*dt](r[t - timeTol*dt]) or (t <= maxVal)
+                % rShifted = obj.shiftTimeBackwards(rVal(endOfFirst:startOfNext-1), num2str(timeTol));
+                % FPIstruct(tmpIndex).formula = ['ev_[0,' num2str(timeTol-1) '*dt](' rShifted ') or (t <= ' num2str(maxVal) ')'];
+                % rVal = [rVal(1:endOfFirst-1) '(ev_[0,' num2str(timeTol-1) '*dt](' rShifted ') or (t <= ' num2str(maxVal) '))' rVal(startOfNext:end)];
+                
+                % New implementation with past operators
+                if isinf(timeTol)
+                    % The formula cannot be falsified
+                    newFPIstruct(end).formula = 'true';
+                else
+                    newFPIstruct(end).formula = ['once_[0,' num2str(timeTol) '*dt](' FPIstruct(tmpIndex).formula ')'];
+                end
+                
+                startDelay = rStartDelay + timeTol;
+                depth = rDepth + 2;
+                modalDepth = rModalDepth + 1;
+            case '>'
+                % Old implementation using future operators
+                % alw_[0, (timeTol-1)*dt](not(r[t - (timeTol-1)*dt])) and (t > maxVal)
+                % rShifted = obj.shiftTimeBackwards(rVal(endOfFirst:startOfNext-1), num2str(timeTol-1));
+                % FPIstruct(tmpIndex).formula = ['alw_[0,' num2str(timeTol-1) '*dt](not(' rShifted ')) and (t > ' num2str(maxVal) ')'];
+                % rVal = [rVal(1:endOfFirst-1) '(alw_[0,' num2str(timeTol-1) '*dt](not(' rShifted ')) and (t > ' num2str(maxVal) '))' rVal(startOfNext:end)];
+                
+                % New implementation with past operators
+                if isinf(timeTol)
+                    % The formula cannot be satisfied
+                    newFPIstruct(end).formula = 'false';
+                else
+                    newFPIstruct(end).formula = ['hist_[0,' num2str(timeTol-1) '*dt](not(' FPIstruct(tmpIndex).formula '))'];
+                end
+                
+                startDelay = rStartDelay + timeTol - 1;
+                depth = rDepth + 3;
+                modalDepth = rModalDepth + 1;
+            case '>='
+                % Old implementation using future operators
+                % alw_[0, timeTol*dt](not(r[t - timeTol*dt])) and (t >= maxVal)
+                % rShifted = obj.shiftTimeBackwards(rVal(endOfFirst:startOfNext-1), num2str(timeTol));
+                % FPIstruct(tmpIndex).formula = ['alw_[0,' num2str(timeTol) '*dt](not(' rShifted ')) and (t >= ' num2str(maxVal) ')'];
+                % rVal = [rVal(1:endOfFirst-1) '(alw_[0,' num2str(timeTol) '*dt](not(' rShifted ')) and (t >= ' num2str(maxVal) '))' rVal(startOfNext:end)];
+                
+                % New implementation with past operators
+                if isinf(timeTol)
+                    % The formula cannot be satisfied
+                    newFPIstruct(end).formula = 'false';
+                else
+                    newFPIstruct(end).formula = ['hist_[0,' num2str(timeTol) '*dt](not(' FPIstruct(tmpIndex).formula '))'];
+                end
+                
+                startDelay = rStartDelay + timeTol;
+                depth = rDepth + 3;
+                modalDepth = rModalDepth + 1;
+            case '~='
+                % TODO: Confirm that this is correct!
+                % Same as for '<'
+                
+                % Old implementation using future operators
+                % rShifted = obj.shiftTimeBackwards(rVal(endOfFirst:startOfNext-1), num2str(timeTol-1));
+                % FPIstruct(tmpIndex).formula = ['ev_[0,' num2str(timeTol-1) '*dt](' rShifted ')'];
+                % rVal = [rVal(1:endOfFirst-1) '(ev_[0,' num2str(timeTol-1) '*dt](' rShifted '))' rVal(startOfNext:end)];
+                
+                % New implementation with past operators
+                if isinf(timeTol)
+                    % The formula cannot be falsified
+                    newFPIstruct(end).formula = 'true';
+                else
+                    newFPIstruct(end).formula = ['once_[0,' num2str(timeTol-1) '*dt](' FPIstruct(tmpIndex).formula ')'];
+                end
+                
+                startDelay = rStartDelay + timeTol - 1;
+                depth = rDepth + 1;
+                modalDepth = rModalDepth + 1;
+            case '=='
+                % TODO: Confirm that this is correct!
+                % Same as for '>='
+                
+                % Old implementation using future operators
+                % rShifted = obj.shiftTimeBackwards(rVal(endOfFirst:startOfNext-1), num2str(timeTol));
+                % FPIstruct(tmpIndex).formula = ['alw_[0,' num2str(timeTol) '*dt](not(' rShifted ')) and (t >= ' num2str(maxVal) ')'];
+                % rVal = [rVal(1:endOfFirst-1) '(alw_[0,' num2str(timeTol) '*dt](not(' rShifted ')) and (t >= ' num2str(maxVal) '))' rVal(startOfNext:end)];
+                
+                % New implementation with past operators
+                if isinf(timeTol)
+                    % The formula cannot be satisfied
+                    newFPIstruct(end).formula = 'false';
+                else
+                    newFPIstruct(end).formula = ['hist_[0,' num2str(timeTol) '*dt](not(' FPIstruct(tmpIndex).formula '))'];
+                end
+                
+                startDelay = rStartDelay + timeTol;
+                depth = rDepth + 3;
+                modalDepth = rModalDepth + 1;
+            otherwise
+                error('Unknown operator in the parent to resetCounter')
+        end
+        
     end
     
 end
@@ -196,7 +265,7 @@ updateStruct.startDelay = startDelay;
 updateStruct.endDelay = rEndDelay;
 updateStruct.depth = depth;
 updateStruct.modalDepth = modalDepth;
-updateStruct.FPIstruct = FPIstruct;
+updateStruct.FPIstruct = newFPIstruct;
 updateStruct.type = 'phi_exp';
 updateStruct.component = thisRelBlock;
 obj.updateSubStructAndFormulaString(updateStruct);
