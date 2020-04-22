@@ -14,6 +14,29 @@ inputType2 = obj.getType(inputNames{2});
 if strcmp(inputType1,'phi_exp') || strcmp(inputType2, 'phi_exp')
     % At least one input is logical!
     % We need to change to a logical formula to match STL semantics
+    
+    % To make these semantics correct, BOTH inputs need to be logical
+    % (otherwise we are comparing a Boolean to some real value - it is not
+    % enough to look at the truth values of the phi_expressions to reason
+    % about the value of the final expression). 
+    assert(strcmp(inputType1, 'phi_exp'), 'Both inputs need to have type phi_exp');
+    assert(strcmp(inputType2, 'phi_exp'), 'Both inputs need to have type phi_exp');
+    
+    % To expand on this: Consider "x < y" where x logical but y not
+    % Table of values of "x < y" using Simulink semantics:
+    %    y  0  1  2
+    % x |-----------
+    % 0 |   0  1  1
+    % 1 |   0  0  1
+    
+    % Since y is considered as true for both values 1 and 2, but x < y is
+    % false for (x = 1, y =1) and true for (x = 1, y = 2), it is not enough
+    % with just the truth value of y to determine the truth value of "x<y".
+    % As a result, we need to assert that BOTH x and y are logical if one
+    % of them are (otherwise we would just have to log the output of the
+    % block instead). 
+    
+    
     if strcmp(operator, '==')
         % Change formula to "(inp1 and inp2) or (not(inp1) and not(inp2))"
         andAsEqualityToSTL(obj, component, inputNames);
