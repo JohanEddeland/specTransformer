@@ -17,9 +17,9 @@ assert(numel(FPIstruct2) == 1, 'We expect a constant as the steptime to notAlway
 % Calculate the time tolerance
 timeTol = reqtime/steptime;
 
-% In case the time tolerance is not an integer, it should be rounded up to
-% be equivalent to Simulink semantics of notAlways block
-timeTol = ceil(timeTol);
+% In case the time tolerance is not an integer, it should be rounded down 
+% to be equivalent to Simulink semantics of notAlways block
+timeTol = floor(timeTol);
 
 for tmpIndex=1:length(FPIstruct)
     % New implementation using past operators
