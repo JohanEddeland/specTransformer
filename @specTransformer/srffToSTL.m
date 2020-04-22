@@ -51,17 +51,18 @@ for tmpIndex=1:length(FPIstruct1)
         if term2_evaluated == 0
             % If R == 0, set the formula to the
             % following: (S[t] or Q[t-1])
-            FPIstruct(end).formula = ['(' term1 ' or ' obj.shiftTimeBackwards(Q,'1') ')'];
+            % Note that the signal we have logged as Q is indeed a
+            % time-delayed signal, so we need not shift it backwards in
+            % time
+            FPIstruct(end).formula = ['(' term1 ' or ' Q ')'];
         else
             % R != 0
             % Formula: (not(R[t]) and (S[t] or Q[t-1]))
-            FPIstruct(end).formula = ['(not(' term2 ') and (' term1 ' or ' obj.shiftTimeBackwards(Q,'1') '))'];
+            FPIstruct(end).formula = ['(not(' term2 ') and (' term1 ' or ' Q '))'];
         end
     end
 end
 FPIstruct(1) = [];
-
-obj.logCounter = obj.logCounter + 1;
 
 thisStartDelay = max(startDelay1 + 1, startDelay2 + 1);
 thisEndDelay = max(endDelay1, endDelay2);
