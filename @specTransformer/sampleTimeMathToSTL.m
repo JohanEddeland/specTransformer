@@ -2,6 +2,7 @@ function sampleTimeMathToSTL(obj, component)
 %FUNCTION   Description goes here.
 %
 
+error('TODO: Implement this with correct sample time parameter');
 inputNames = obj.getInputNames(component);
 [startDelay, endDelay, depth, modalDepth, FPIstruct] = obj.getSubStructInfo(inputNames{1});
 
