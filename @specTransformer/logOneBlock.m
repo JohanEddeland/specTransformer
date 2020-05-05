@@ -22,8 +22,8 @@ if isempty(outportHandle)
     return
 end
 
-disp(['Logging output of ' blockName num2str(obj.logCounter)]);
-tmpSignalName = [blockName num2str(obj.logCounter)];
+disp(['Logging output of ' blockName '_' num2str(obj.logCounter)]);
+tmpSignalName = [blockName '_' num2str(obj.logCounter)];
 
 % Store the block and data type 
 IndexC = strfind(obj.allBlocks, [get(blockHandle, 'Path') '/' get(blockHandle, 'Name')]);
@@ -34,7 +34,7 @@ obj.logTypes = [obj.logTypes; obj.allTypes{typeIndex}];
 obj.logCounter = obj.logCounter + 1;
 obj.fpiCounter = obj.fpiCounter + 1;
 if length(outportHandle) > 1
-    tmpSignalName2 = [blockName num2str(obj.logCounter)];
+    tmpSignalName2 = [blockName '_' num2str(obj.logCounter)];
     %eval(['log' num2str(obj.logCounter) ' = tmpSignalName;']);
     obj.logCounter = obj.logCounter + 1;
     obj.fpiCounter = obj.fpiCounter + 1;
