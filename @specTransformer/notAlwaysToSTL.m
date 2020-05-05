@@ -21,17 +21,28 @@ timeTol = reqtime/steptime;
 % to be equivalent to Simulink semantics of notAlways block
 timeTol = floor(timeTol);
 
-for tmpIndex=1:length(FPIstruct)
-    % New implementation using past operators
-    FPIstruct(tmpIndex).formula = ['(not(hist_[0, ' num2str(timeTol) '*dt](' FPIstruct(tmpIndex).formula ')))'];
+newFPIstruct = struct;
+newFPIstruct(1).prereqSignals = {};
+newFPIstruct(1).prereqFormula = '';
+newFormula = ['(not(hist_[0, ' num2str(timeTol) '*dt]('];
+
+for tmpIndex=1:length(FPIstruct)-1
+    newFormula = [newFormula '(' FPIstruct(tmpIndex).prereqFormula ' and ' FPIstruct(tmpIndex).formula ') or']; %#ok<*AGROW>
 end
+if length(FPIstruct) == 1
+    newFormula = [newFormula FPIstruct(end).formula];
+else
+    newFormula = [newFormula '(' FPIstruct(end).prereqFormula ' and ' FPIstruct(end).formula ')'];
+end
+newFormula = [newFormula ')))'];
+newFPIstruct(1).formula = newFormula;
 
 updateStruct = struct();
 updateStruct.startDelay = startDelay3 + timeTol;
 updateStruct.endDelay = endDelay3;
 updateStruct.depth = depth3 + 2;
 updateStruct.modalDepth = modalDepth3 + 1;
-updateStruct.FPIstruct = FPIstruct;
+updateStruct.FPIstruct = newFPIstruct;
 updateStruct.type = 'phi_exp';
 updateStruct.component = component;
 

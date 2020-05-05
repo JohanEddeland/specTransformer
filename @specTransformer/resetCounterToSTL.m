@@ -73,8 +73,8 @@ if isempty(inpNamesTmp{2})
 else
     % Option 2: Input 2 to the relational operator has
     % already been set. We find the value!
-    [~,~,~,~,FPIstruct3] = obj.getSubStructInfo(inpNamesTmp{2});
-    maxVal = evalin('base',FPIstruct3(1).formula);
+    [~,~,~,~,FPIstructTemp] = obj.getSubStructInfo(inpNamesTmp{2});
+    maxVal = evalin('base',FPIstructTemp(1).formula);
 end
 
 % The current implementation assumes that the resetValue is 0
@@ -133,6 +133,11 @@ for tmpIndex=1:length(FPIstruct)
         
         % Calculate the time tolerance (max/inc)
         timeTol = maxVal/inc;
+        
+        % If the time tolerance is not integer, we should actually just
+        % floor it to make truth value correspond to Simulink semantics for
+        % fixed-step simulation
+        timeTol = floor(timeTol);
         
         switch get(thisRelBlock, 'Operator')
             case '<'
