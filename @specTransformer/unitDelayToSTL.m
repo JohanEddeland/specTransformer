@@ -8,6 +8,12 @@ inputName = obj.getInputNames(component);
 
 % Fix the FPIstruct
 for k = 1:length(FPIstruct)
+    for prereqCounter = 1:numel(FPIstruct(k).prereqSignals)
+        FPIstruct(k).prereqSignals{prereqCounter} = ...
+            obj.shiftTimeBackwards(FPIstruct(k).prereqSignals{prereqCounter}, '1');
+    end
+    FPIstruct(k).prereqFormula = obj.shiftTimeBackwards(FPIstruct(k).prereqFormula, '1');
+    
     tmpFormula = FPIstruct(k).formula;
     % Handle the case where the formula is just 0 (for
     % example)
