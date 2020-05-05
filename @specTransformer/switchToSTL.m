@@ -26,9 +26,9 @@ for tmpIndex=1:length(FPIstruct2)
     for kInp1=1:length(FPIstruct1)
         % Update prereqSignals
         if isempty(FPIstruct2(tmpIndex).prereqSignals)
-            thisFPIstruct(end+1).prereqSignals = {[inputNames{2} ' ~= 0'],FPIstruct1(kInp1).prereqSignals{:}}; %#ok<*AGROW>
+            thisFPIstruct(end+1).prereqSignals = {[inputNames{2} '[t] ~= 0'],FPIstruct1(kInp1).prereqSignals{:}}; %#ok<*AGROW>
         else
-            thisFPIstruct(end+1).prereqSignals = {FPIstruct2(tmpIndex).prereqSignals{:}, [inputNames{2} '~=0'],FPIstruct1(kInp1).prereqSignals{:}};
+            thisFPIstruct(end+1).prereqSignals = {FPIstruct2(tmpIndex).prereqSignals{:}, [inputNames{2} '[t] ~= 0'],FPIstruct1(kInp1).prereqSignals{:}};
         end
         
         % Update prereqFormula
@@ -53,9 +53,9 @@ for tmpIndex=1:length(FPIstruct2)
     for kInp3=1:length(FPIstruct3)
         % Update prereqSignals
         if isempty(FPIstruct2(tmpIndex).prereqSignals)
-            thisFPIstruct(end+1).prereqSignals = {[inputNames{2} ' == 0'],FPIstruct3(kInp3).prereqSignals{:}};
+            thisFPIstruct(end+1).prereqSignals = {[inputNames{2} '[t] == 0'],FPIstruct3(kInp3).prereqSignals{:}};
         else
-            thisFPIstruct(end+1).prereqSignals = {FPIstruct2(tmpIndex).prereqSignals{:}, [inputNames{2} '==0'],FPIstruct3(kInp3).prereqSignals{:}};
+            thisFPIstruct(end+1).prereqSignals = {FPIstruct2(tmpIndex).prereqSignals{:}, [inputNames{2} '[t] == 0'],FPIstruct3(kInp3).prereqSignals{:}};
         end
         
         % Update prereqFormula

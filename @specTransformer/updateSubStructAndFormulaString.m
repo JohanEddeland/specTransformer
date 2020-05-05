@@ -124,9 +124,21 @@ function sat = checkSatOfPrereq(prereqSignals)
 sat = 1;
 for k = 1:numel(prereqSignals)
     thisPrereqSignal = prereqSignals{k};
-    [startIdx, endIdx] = regexp(thisPrereqSignal, 'sub\d+');
+    [startIdx, endIdx] = regexp(thisPrereqSignal, 'sub\d+\[.*\]');
     
+    % thisPrereqSignal is something like "sub19[t] ~= 0"
+    % We want to create a variable corresponding to sub19[t] and then eval
+    % the expression, so we need to replace all non-admissible characters
+    % with underscores. 
     thisSubSignal = thisPrereqSignal(startIdx:endIdx);
+    thisSubSignal = strrep(thisSubSignal, '[', '_');
+    thisSubSignal = strrep(thisSubSignal, ']', '_');
+    thisSubSignal = strrep(thisSubSignal, '-', '_');
+    thisSubSignal = strrep(thisSubSignal, '+', '__');
+    thisSubSignal = strrep(thisSubSignal, '*', '___');
+    
+    % Finally, replace the characters in thisPrereqSignal as well
+    thisPrereqSignal = regexprep(thisPrereqSignal, 'sub\d+\[.*\]', thisSubSignal);
     
     if ~exist(thisSubSignal, 'var')
         % Assign variable value since it has not been assigned yet
