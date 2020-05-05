@@ -19,8 +19,29 @@ if strcmp(inputType1,'phi_exp') || strcmp(inputType2, 'phi_exp')
     % (otherwise we are comparing a Boolean to some real value - it is not
     % enough to look at the truth values of the phi_expressions to reason
     % about the value of the final expression). 
-    assert(strcmp(inputType1, 'phi_exp'), 'Both inputs need to have type phi_exp');
-    assert(strcmp(inputType2, 'phi_exp'), 'Both inputs need to have type phi_exp');
+    if ~(strcmp(inputType1, 'phi_exp') && strcmp(inputType2, 'phi_exp'))
+        % It is not the case that both inputs are phi_exp
+        
+        % It might be ok that they are signal_exp, BUT then we need to
+        % assert that the Simulink signal types are Boolean. If they are,
+        % we know that the Boolean satisfaction is all we need to look at
+        % (the signals can only have values 0 and 1). 
+        fullPath = [get(component, 'Path') '/' get(component, 'Name')];
+        blockIndex = find(contains(obj.allBlocks, fullPath));
+        if ~(numel(blockIndex)==1)
+            error(['We need to be able to check the Simulink signal ' ...
+                'type, but we did not find the block in the allBlocks ' ...
+                'variable in the testronSTL object']);
+        end
+        inportTypes = obj.allTypes{blockIndex}.Inport;
+        % Assert that ALL inports are of Boolean type
+        for inportCounter = 1:numel(inportTypes)
+            thisTypeTemp = inportTypes{inportCounter};
+            assert(strcmp(thisTypeTemp, 'boolean'), 'All inputs need to be boolean for this case of relationalOperatorToSTL');
+        end
+    end
+
+    
     
     % To expand on this: Consider "x < y" where x logical but y not
     % Table of values of "x < y" using Simulink semantics:
