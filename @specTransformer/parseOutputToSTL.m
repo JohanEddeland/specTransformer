@@ -81,8 +81,7 @@ while contFlag
         elseif strcmp(blockType,'SubSystem')
             % Here, we can define STL formulas for template subsystems. 
             % Volvo templates have been removed. 
-            % TODO: Make sure all the generated ones are correct!
-            if strfind(get(component,'Name'),'notAlways')
+            if strfind(get(component,'Name'),'notAlways') %#ok<*STRIFCND>
                 obj.notAlwaysToSTL(component);
             elseif strfind(get(component,'Name'),'Saturation')
                 obj.saturationToSTL(component);
@@ -92,12 +91,6 @@ while contFlag
                 component = obj.resetCounterToSTL(component);
             elseif strfind(get(component, 'Name'), 'SR_FF')
                 obj.srffToSTL(component);
-            elseif strfind(get(component,'Name'),'Detect') & ...
-                    strfind(get(component,'Name'), 'Decrease') %#ok<*AND2>
-                obj.detectDecreaseToSTL(component);
-            elseif strfind(get(component,'Name'),'Detect') & ...
-                    strfind(get(component,'Name'), 'Increase') %#ok<*STRIFCND>
-                obj.detectIncreaseToSTL(component);
             elseif strfind(get(component, 'Name'), 'alwaysWithinTime')
                 obj.alwaysWithinTimeToSTL(component);
             else
